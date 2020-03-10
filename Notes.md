@@ -16,6 +16,13 @@ go build
 * `go build -o app ./cmd/web`
 * `./app`
 
+Decoupled Logging
+
+```bash
+# redirect the stdout and stderr streams to on-disk files
+go run ./cmd/web >>/tmp/info.log 2>>/tmp/error.log
+```
+
 http.FileServer
 
 * range requests are fully supported
