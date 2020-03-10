@@ -29,3 +29,9 @@ Content-Type: image/png
 Last-Modified: Thu, 04 May 2017 13:07:52 GMT
 Date: Tue, 10 Mar 2020 11:28:59 GMT
 ```
+
+## Disabling Directory Listings
+
+Add a blank index.html file to the specific directories:
+
+`find ./ui/static -type d -exec touch {}/index.html \;`
