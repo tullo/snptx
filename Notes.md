@@ -2,13 +2,12 @@
 
 go run
 
+* `go run ./cmd/web`
 * `go run github.com/tullo/snptx`
-* `go run .`
-* `go run main.go`
 
 go build
 
-* `go build`
-* `./snptx`
-* `go build -o app`
+* `go build ./cmd/web`
+* `./web`
+* `go build -o app ./cmd/web`
 * `./app`
