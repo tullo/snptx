@@ -46,3 +46,13 @@ Date: Tue, 10 Mar 2020 11:28:59 GMT
 Add a blank index.html file to the specific directories:
 
 `find ./ui/static -type d -exec touch {}/index.html \;`
+
+## Installing mysql database driver
+
+``` bash
+# download the latest version of the package
+go get -u github.com/go-sql-driver/mysql
+go: downloading github.com/go-sql-driver/mysql v1.5.0
+go: github.com/go-sql-driver/mysql upgrade => v1.5.0
+
+```
