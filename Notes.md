@@ -50,11 +50,19 @@ Add a blank index.html file to the specific directories:
 ## Installing mysql database driver
 
 ``` bash
+# download the latest available version under major release number 1
+# go get -u github.com/go-sql-driver/mysql@v1
+
 # download the latest version of the package
 go get -u github.com/go-sql-driver/mysql
 go: downloading github.com/go-sql-driver/mysql v1.5.0
 go: github.com/go-sql-driver/mysql upgrade => v1.5.0
 
+go mod tidy     # removes unused packages from go.mod and go.sum
+go mod verify   # verify checksums of the downloaded packages
+go mod download # errors if mismatch between dependencies and checksums
+go get -u ...   # upgrade to latest available minor or patch release of a package
+go get -u github.com/foo/bar@v2.0.0
 ```
 
 ## DB preparation
