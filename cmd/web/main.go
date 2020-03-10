@@ -19,6 +19,7 @@ type application struct {
 
 func main() {
 	addr := flag.String("addr", ":4200", "HTTP network address")
+	// force the db driver to convert TIME and DATE fields to time.Time (parseTime=true)
 	dsn := flag.String("dsn", "web:snptx@tcp(0.0.0.0:3306)/snptx?parseTime=true", "MySQL data source name")
 	flag.Parse()
 
