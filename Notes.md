@@ -83,6 +83,11 @@ CREATE DATABASE snptx CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER 'web'@'localhost';
 GRANT SELECT, INSERT, UPDATE ON snptx.* TO 'web'@'localhost';
 ALTER USER 'web'@'localhost' IDENTIFIED BY 'snptx';
+
+CREATE USER 'web'@'172.19.0.1';
+GRANT SELECT, INSERT, UPDATE ON snptx.* TO 'web'@'172.19.0.1';
+ALTER USER 'web'@'172.19.0.1' IDENTIFIED BY 'snptx';
+
 USE snptx;
 
 CREATE TABLE snippets (
