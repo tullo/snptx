@@ -1,0 +1,12 @@
+version: '2'
+services:
+  db:
+    image: mysql:8
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpw
+      MYSQL_DATABASE: snptx
+      MYSQL_USER: snptx
+      MYSQL_PASSWORD: snptx
