@@ -3,6 +3,10 @@
 go run
 
 * `go run ./cmd/web`
+* `go run ./cmd/web -addr :80`
+* `go run ./cmd/web -addr=:80`
+* `export SNPTX_ADDR=":9999"`
+* `go run ./cmd/web -addr=$SNPTX_ADDR`
 * `go run github.com/tullo/snptx`
 
 go build
