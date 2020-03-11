@@ -137,7 +137,9 @@ SELECT id, title, expires FROM snippets;
 +----+------------------------+---------------------+
 ```
 
-### [XSS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection) (Cross Site Scripting) hint for older browser implementations
+### [XSS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection) (Cross Site Scripting)
+
+Hint for older browser implementations
 
 ```bash
 # 1; mode=block - the browser will prevent rendering of the page if an attack is detected
@@ -147,9 +149,18 @@ $ curl -I http://localhost:4200/
 HTTP/1.1 200 OK
 X-Frame-Options: deny
 X-Xss-Protection: 1; mode=block
-Date: Wed, 11 Mar 2020 07:27:35 GMT
-Content-Length: 1655
-Content-Type: text/html; charset=utf-8
+...
 ```
 
 Modern browser: Use a strong [Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) that disables the use of inline JavaScript ('unsafe-inline')
+
+### Panic Recovery
+
+Closes client connection automatically
+
+```bash
+$ curl -I http://localhost:4200/
+HTTP/1.1 500 Internal Server Error
+Connection: close
+...
+```

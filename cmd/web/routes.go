@@ -12,6 +12,6 @@ func (app *application) routes() http.Handler {
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	// Flow of control (reading from left to right):
-	// logRequest ↔ secureHeaders ↔ servemux ↔ application handler
-	return app.logRequest(secureHeaders(mux))
+	// recoverPanic ↔ logRequest ↔ secureHeaders ↔ servemux ↔ application handler
+	return app.recoverPanic(app.logRequest(secureHeaders(mux)))
 }
