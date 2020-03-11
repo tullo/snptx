@@ -180,3 +180,7 @@ echo 'tls/' >> .gitignore
 mkdir tls && cd tls
 minica --domains localhost
 ```
+
+### Security/Server Side TLS
+
+[Recommended configurations](https://wiki.mozilla.org/Security/Server_Side_TLS) for modern clients that support TLS 1.3, with no need for backwards compatibility.
