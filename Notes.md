@@ -172,3 +172,11 @@ HTTP/1.1 500 Internal Server Error
 Connection: close
 ...
 ```
+
+### Generate selv signed TLS certificate
+
+```bash
+echo 'tls/' >> .gitignore
+mkdir tls && cd tls
+minica --domains localhost
+```
