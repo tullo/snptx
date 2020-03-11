@@ -47,16 +47,24 @@ Add a blank index.html file to the specific directories:
 
 `find ./ui/static -type d -exec touch {}/index.html \;`
 
-## Installing mysql database driver
+## Installing dependencies
 
 ``` bash
 # download the latest available version under major release number 1
 # go get -u github.com/go-sql-driver/mysql@v1
 
-# download the latest version of the package
+# download the latest version of the mysql driver package
 go get -u github.com/go-sql-driver/mysql
 go: downloading github.com/go-sql-driver/mysql v1.5.0
 go: github.com/go-sql-driver/mysql upgrade => v1.5.0
+
+# composable middleware chains
+go get github.com/justinas/alice
+# pattern based mux
+go get github.com/bmizerany/pat
+# cookie-based session store -> limited (to 4KB)
+# uses encrypted and authenticated cookies
+go get github.com/golangcollege/sessions
 
 go mod tidy     # removes unused packages from go.mod and go.sum
 go mod verify   # verify checksums of the downloaded packages
