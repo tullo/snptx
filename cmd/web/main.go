@@ -7,14 +7,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golangcollege/sessions"
 	"github.com/tullo/snptx/pkg/models/mysql"
 )
 
 type application struct {
 	errorLog      *log.Logger
 	infoLog       *log.Logger
+	session       *sessions.Session
 	snippets      *mysql.SnippetModel
 	templateCache map[string]*template.Template
 }
@@ -23,6 +26,10 @@ func main() {
 	addr := flag.String("addr", ":4200", "HTTP network address")
 	// force the db driver to convert TIME and DATE fields to time.Time (parseTime=true)
 	dsn := flag.String("dsn", "web:snptx@tcp(0.0.0.0:3306)/snptx?parseTime=true", "MySQL data source name")
+	// session secret (should be 32 bytes long) used to encrypt and authenticate session cookies
+	// e.g. 'openssl rand -base64 32'
+	secret := flag.String("secret", "un/MjLYrdgFiQxAHDge/lI/kydfyZRo4T0UF+Mn4xag=", "Secret key")
+
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -40,9 +47,14 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	// sessions expire after 12 hours
+	session := sessions.New([]byte(*secret))
+	session.Lifetime = 12 * time.Hour
+
 	app := &application{
 		errorLog:      errorLog,
 		infoLog:       infoLog,
+		session:       session,
 		snippets:      &mysql.SnippetModel{DB: db},
 		templateCache: templateCache,
 	}
