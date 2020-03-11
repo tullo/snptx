@@ -28,6 +28,9 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 		td = &templateData{}
 	}
 	td.CurrentYear = time.Now().Year()
+	// retrieve the value for the flash key and delete the key in one step
+	// add flash message to the template data
+	td.Flash = app.session.PopString(r, "flash")
 	return td
 }
 

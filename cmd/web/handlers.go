@@ -42,11 +42,7 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// retrieve the value for the flash key and delete the key in one step
-	flash := app.session.PopString(r, "flash")
-
 	app.render(w, r, "show.page.tmpl", &templateData{
-		Flash:   flash,
 		Snippet: s,
 	})
 }
