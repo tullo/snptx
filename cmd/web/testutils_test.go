@@ -7,13 +7,38 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/golangcollege/sessions"
+	"github.com/tullo/snptx/pkg/models/mock"
 )
 
 // newTestApplication creates an application struct with mock loggers
 func newTestApplication(t *testing.T) *application {
+	// initialize template cache
+	templateCache, err := newTemplateCache("./../../ui/html/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// session manager instance that mirrors production settings
+	// sample generation of secret bytes 'openssl rand -base64 32'
+	session := sessions.New([]byte("zBtjT1J8wWrvUCuEZf+YbBa41nKYlCKiNLeS5AGdmiQ="))
+	// sessions expire after 12 hours
+	session.Lifetime = 12 * time.Hour
+	// set the secure flag on session cookies
+	session.Secure = true
+	// mitigate cross site request forgry csrf
+	session.SameSite = http.SameSiteStrictMode
+
+	// app struct instantiation using the mocks for the loggers and database models
 	return &application{
-		errorLog: log.New(ioutil.Discard, "", 0),
-		infoLog:  log.New(ioutil.Discard, "", 0),
+		errorLog:      log.New(ioutil.Discard, "", 0),
+		infoLog:       log.New(ioutil.Discard, "", 0),
+		session:       session,
+		snippets:      &mock.SnippetModel{},
+		templateCache: templateCache,
+		users:         &mock.UserModel{},
 	}
 }
 
