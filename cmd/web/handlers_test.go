@@ -122,3 +122,58 @@ func TestSignupUser(t *testing.T) {
 		})
 	}
 }
+
+// TestCreateSnippetForm checks that:
+// - Unauthenticated users are redirected to the login form.
+// - Authenticated users are shown the form to create a new snippet.
+func TestCreateSnippetForm(t *testing.T) {
+
+	app := newTestApplication(t)
+
+	// start the https test server
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	// run sub-test
+	t.Run("Unauthenticated", func(t *testing.T) {
+		code, headers, _ := ts.get(t, "/snippet/create")
+		if code != http.StatusSeeOther {
+			t.Errorf("want %d; got %d", http.StatusSeeOther, code)
+		}
+		if headers.Get("Location") != "/user/login" {
+			t.Errorf("want %s; got %s", "/user/login", headers.Get("Location"))
+		}
+	})
+
+	// run sub-test
+	t.Run("Authenticated", func(t *testing.T) {
+
+		// mimic the workflow of logging in as a user to authenticate
+
+		// the get call returns: code, headers, body_bytes
+		_, _, body := ts.get(t, "/user/login")
+
+		// extract csrf token from the page with the login form
+		csrfToken := extractCSRFToken(t, body)
+
+		// post the form to login the user
+		form := url.Values{}
+		form.Add("email", "alice@example.com")
+		form.Add("password", "")
+		form.Add("csrf_token", csrfToken)
+		ts.postForm(t, "/user/login", form)
+
+		// the authenticated user have access to the create snippet page
+		code, _, body := ts.get(t, "/snippet/create")
+		if code != http.StatusOK {
+			t.Errorf("want %d; got %d", http.StatusOK, code)
+		}
+		//t.Log(string(body))
+
+		// check that the authenticated user is shown the create snippet form
+		formTag := "<form action='/snippet/create' method='POST'>"
+		if !bytes.Contains(body, []byte(formTag)) {
+			t.Errorf("want body %s to contain %q", body, formTag)
+		}
+	})
+}
