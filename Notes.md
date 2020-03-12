@@ -30,6 +30,9 @@ go test
 * parallel tests marked using `t.Parallel()`
   * uses all available processors per default
   * `go test -parallel 4 ./cmd/web`
+* antidote for cached test results
+  * go test -run="TestSignupUser" -count=1 ./cmd/web
+  * go clean -testcache
 
 ## Decoupled Logging
 

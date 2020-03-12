@@ -1,17 +1,35 @@
 package main
 
 import (
+	"html"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
+	"regexp"
 	"testing"
 	"time"
 
 	"github.com/golangcollege/sessions"
 	"github.com/tullo/snptx/pkg/models/mock"
 )
+
+// Capture the CSRF token value from the HTML for the user signup page
+var csrfTokenRX = regexp.MustCompile(`<input type='hidden' name='csrf_token' value='(.+)'>`)
+
+func extractCSRFToken(t *testing.T, body []byte) string {
+	// extract the token from the HTML body
+	matches := csrfTokenRX.FindSubmatch(body)
+	// expecting an array with at least two entries (matched pattern & captured data)
+	if len(matches) < 2 {
+		t.Fatal("no csrf token found in body")
+	}
+
+	// unescape the rendered and html escaped base64 encoded string value
+	return html.UnescapeString(string(matches[1]))
+}
 
 // newTestApplication creates an application struct with mock loggers
 func newTestApplication(t *testing.T) *application {
@@ -70,10 +88,27 @@ func newTestServer(t *testing.T, h http.Handler) *testServer {
 	return &testServer{ts}
 }
 
-// get performs a get request to a given url path on the test server
+// get performs a GET request to a given url path on the test server
 func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, []byte) {
-	// make a get request against the test server
+	// make a GET request against the test server
 	rs, err := ts.Client().Get(ts.URL + urlPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rs.Body.Close()
+
+	body, err := ioutil.ReadAll(rs.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return rs.StatusCode, rs.Header, body
+}
+
+// postForm method for sending POST requests to the test server
+func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (int, http.Header, []byte) {
+	// make a POST request against the test server
+	rs, err := ts.Client().PostForm(ts.URL+urlPath, form)
 	if err != nil {
 		t.Fatal(err)
 	}
