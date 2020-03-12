@@ -46,7 +46,12 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 
 // isAuthenticated checks if the request is from an authenticated user
 func (app *application) isAuthenticated(r *http.Request) bool {
-	return app.session.Exists(r, "authenticatedUserID")
+	isAuthenticated, ok := r.Context().Value(contextKeyIsAuthenticated).(bool)
+	if !ok {
+		// key not found in ctx, or value was not a boolean
+		return false
+	}
+	return isAuthenticated
 }
 
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, data *templateData) {
