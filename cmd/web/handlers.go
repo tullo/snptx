@@ -158,7 +158,7 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Add the ID of the current user to the session (user loged in)
+	// Add the ID of the current user to the session data (user loged in)
 	app.session.Put(r, "authenticatedUserID", id)
 
 	// Redirect the user to the create snippet page.
@@ -166,5 +166,9 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) logoutUser(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Logout the user...")
+	// remove authenticatedUserID from the session data (user logged out)
+	app.session.Remove(r, "authenticatedUserID")
+	// add flash message to the user session
+	app.session.Put(r, "flash", "You've been logged out successfully!")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

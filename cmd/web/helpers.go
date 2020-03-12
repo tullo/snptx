@@ -31,7 +31,16 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 	// retrieve the value for the flash key and delete the key in one step
 	// add flash message to the template data
 	td.Flash = app.session.PopString(r, "flash")
+
+	// add authentication status to the template data
+	td.IsAuthenticated = app.isAuthenticated(r)
+
 	return td
+}
+
+// isAuthenticated checks if the request is from an authenticated user
+func (app *application) isAuthenticated(r *http.Request) bool {
+	return app.session.Exists(r, "authenticatedUserID")
 }
 
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, data *templateData) {
