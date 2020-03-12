@@ -11,6 +11,8 @@ go run
 
 go build
 
+directories named `testdata` `_` `.`  will be ignored when compiling Go binaries
+
 * `go build ./cmd/web`
 * `./web`
 * `go build -o app ./cmd/web`
@@ -23,6 +25,10 @@ go test
 * `go test -failfast -v ./cmd/web`
 * `go test -run TestSecureHeaders ./cmd/web`
 * `go test -run="^TestHumanDate$/^UTC|CET$" ./cmd/web`
+* skip long running tests if the `-short` flag is provided
+  * `if testing.Short() { t.Skip("xyz") }`
+  * `go test -short ./pkg/models`
+  * might consider to only run integration tests before committing a change
 * enabling the race detector
   * flags data races at runtime - no static analysis
   * increases overall running time of tests
@@ -250,3 +256,44 @@ To prevent CSRF attacks set the SameSite attribute on our session cookie.
 
 * Works with 84% of the browsers out there https://caniuse.com/#feat=same-site-cookie-attribute
 * [Cross-Site Request Forgery (CSRF) Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+
+## Integration Test
+
+Database preparation:
+
+```sql
+CREATE DATABASE test_snptx CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE USER 'test_web'@'localhost';
+GRANT CREATE, DROP, ALTER, INDEX, SELECT, INSERT, UPDATE, DELETE ON test_snptx.* TO 'test_web'@'localhost';
+ALTER USER 'test_web'@'localhost' IDENTIFIED BY 'pass';
+
+CREATE USER 'test_web'@'172.21.0.1';
+GRANT CREATE, DROP, ALTER, INDEX, SELECT, INSERT, UPDATE, DELETE ON test_snptx.* TO 'test_web'@'172.21.0.1';
+ALTER USER 'test_web'@'172.21.0.1' IDENTIFIED BY 'pass';
+
+-- pkg/models/mysql/testdata/setup.sql
+-- pkg/models/mysql/testdata/teardown.sql
+```
+
+```bash
+$ go test -v ./pkg/models/mysql
+=== RUN   TestUserModelGet
+=== RUN   TestUserModelGet/Valid_ID
+=== RUN   TestUserModelGet/Zero_ID
+=== RUN   TestUserModelGet/Non-existent_ID
+--- PASS: TestUserModelGet (1.35s)
+    --- PASS: TestUserModelGet/Valid_ID (0.47s)
+    --- PASS: TestUserModelGet/Zero_ID (0.44s)
+    --- PASS: TestUserModelGet/Non-existent_ID (0.45s)
+PASS
+ok      github.com/tullo/snptx/pkg/models/mysql 1.356s
+
+
+$ go test -v -short ./pkg/models/mysql
+=== RUN   TestUserModelGet
+    TestUserModelGet: users_test.go:14: mysql: skipping integration test
+--- SKIP: TestUserModelGet (0.00s)
+PASS
+ok      github.com/tullo/snptx/pkg/models/mysql (cached)
+```
