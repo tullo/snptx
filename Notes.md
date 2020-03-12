@@ -16,12 +16,29 @@ go build
 * `go build -o app ./cmd/web`
 * `./app`
 
-Decoupled Logging
+go test
+
+* `go test ./...`
+* `go test -v ./cmd/web`
+* `go test -failfast -v ./cmd/web`
+* `go test -run TestSecureHeaders ./cmd/web`
+* `go test -run="^TestHumanDate$/^UTC|CET$" ./cmd/web`
+* enabling the race detector
+  * flags data races at runtime - no static analysis
+  * increases overall running time of tests
+  * `go test -race ./cmd/web`
+* parallel tests marked using `t.Parallel()`
+  * uses all available processors per default
+  * `go test -parallel 4 ./cmd/web`
+
+## Decoupled Logging
 
 ```bash
 # redirect the stdout and stderr streams to on-disk files
 go run ./cmd/web >>/tmp/info.log 2>>/tmp/error.log
 ```
+
+## Serving static content
 
 http.FileServer
 
@@ -162,7 +179,7 @@ SELECT id, title, expires FROM snippets;
 +----+------------------------+---------------------+
 ```
 
-### [XSS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection) (Cross Site Scripting)
+## [XSS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection) (Cross Site Scripting)
 
 Hint for older browser implementations
 
@@ -179,7 +196,7 @@ X-Xss-Protection: 1; mode=block
 
 Modern browser: Use a strong [Content-Security-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy) that disables the use of inline JavaScript ('unsafe-inline')
 
-### Panic Recovery
+## Panic Recovery
 
 Closes client connection automatically
 
@@ -190,7 +207,7 @@ Connection: close
 ...
 ```
 
-### Generate selv signed TLS certificate
+## Generate selv signed TLS certificate
 
 ```bash
 echo 'tls/' >> .gitignore
@@ -198,11 +215,11 @@ mkdir tls && cd tls
 minica --domains localhost
 ```
 
-### Security/Server Side TLS
+## Security/Server Side TLS
 
 [Recommended configurations](https://wiki.mozilla.org/Security/Server_Side_TLS) for modern clients that support TLS 1.3, with no need for backwards compatibility.
 
-### Require authentication for specific routes
+## Require authentication for specific routes
 
 ```bash
 # === [GET /snippet/create] ===================================================
@@ -224,7 +241,7 @@ location: /user/login
 ...
 ```
 
-### SameSite Cookies
+## SameSite Cookies
 
 To prevent CSRF attacks set the SameSite attribute on our session cookie.
 
