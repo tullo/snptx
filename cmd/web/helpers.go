@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"runtime/debug"
 	"time"
+
+	"github.com/justinas/nosurf"
 )
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
@@ -28,6 +30,10 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 		td = &templateData{}
 	}
 	td.CurrentYear = time.Now().Year()
+
+	// add CSRF token to the template data
+	td.CSRFToken = nosurf.Token(r)
+
 	// retrieve the value for the flash key and delete the key in one step
 	// add flash message to the template data
 	td.Flash = app.session.PopString(r, "flash")

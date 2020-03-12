@@ -54,6 +54,7 @@ func main() {
 	session.Lifetime = 12 * time.Hour
 	// set the secure flag on session cookies
 	session.Secure = true
+	session.SameSite = http.SameSiteStrictMode
 
 	app := &application{
 		errorLog:      errorLog,

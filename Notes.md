@@ -60,11 +60,16 @@ go: github.com/go-sql-driver/mysql upgrade => v1.5.0
 
 # composable middleware chains
 go get github.com/justinas/alice
+
 # pattern based mux
 go get github.com/bmizerany/pat
+
 # cookie-based session store -> limited (to 4KB)
 # uses encrypted and authenticated cookies
 go get github.com/golangcollege/sessions
+
+# csrf protection middleware
+go get github.com/justinas/nosurf
 
 go mod tidy     # removes unused packages from go.mod and go.sum
 go mod verify   # verify checksums of the downloaded packages
@@ -218,3 +223,10 @@ HTTP/2 303
 location: /user/login
 ...
 ```
+
+### SameSite Cookies
+
+To prevent CSRF attacks set the SameSite attribute on our session cookie.
+
+* Works with 84% of the browsers out there https://caniuse.com/#feat=same-site-cookie-attribute
+* [Cross-Site Request Forgery (CSRF) Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)

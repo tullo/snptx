@@ -14,7 +14,7 @@ func (app *application) routes() http.Handler {
 	standardMiddleware := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 
 	// middleware specific to our dynamic application routes
-	dynamicMiddleware := alice.New(app.session.Enable)
+	dynamicMiddleware := alice.New(app.session.Enable, noSurf)
 
 	mux := pat.New()
 	mux.Get("/", dynamicMiddleware.ThenFunc(app.home))
@@ -32,6 +32,6 @@ func (app *application) routes() http.Handler {
 	mux.Get("/static/", http.StripPrefix("/static", fileServer))
 
 	// Flow of control (reading from left to right):
-	// standardMiddleware ↔ servemux ↔ application handler
+	// standardMiddleware ↔ servemux ↔ dynamicMiddleware ↔ application handler
 	return standardMiddleware.Then(mux)
 }
