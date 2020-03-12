@@ -297,3 +297,72 @@ $ go test -v -short ./pkg/models/mysql
 PASS
 ok      github.com/tullo/snptx/pkg/models/mysql (cached)
 ```
+
+## Profiling Test Coverage
+
+Get a test coverage summary
+
+```bash
+go test -cover ./...
+```
+
+Get a detailed breakdown of test coverage by method and function
+
+```bash
+$ go test -coverprofile=/tmp/profile.out ./...
+
+ok  github.com/tullo/snptx/cmd/web  0.020s  coverage: 51.0% of statements
+?   github.com/tullo/snptx/pkg/forms    [no test files]
+?   github.com/tullo/snptx/pkg/models   [no test files]
+?   github.com/tullo/snptx/pkg/models/mock  [no test files]
+ok  github.com/tullo/snptx/pkg/models/mysql 1.530s  coverage: 10.6% of statements
+
+
+$ go tool cover -func=/tmp/profile.out
+
+github.com/tullo/snptx/cmd/web/handlers.go:13:          home                    0.0%
+github.com/tullo/snptx/cmd/web/handlers.go:25:          showSnippet             100.0%
+github.com/tullo/snptx/cmd/web/handlers.go:50:          createSnippetForm       0.0%
+github.com/tullo/snptx/cmd/web/handlers.go:57:          createSnippet           0.0%
+github.com/tullo/snptx/cmd/web/handlers.go:93:          signupUserForm          100.0%
+github.com/tullo/snptx/cmd/web/handlers.go:99:          signupUser              86.4%
+github.com/tullo/snptx/cmd/web/handlers.go:134:         loginUserForm           0.0%
+github.com/tullo/snptx/cmd/web/handlers.go:140:         loginUser               0.0%
+github.com/tullo/snptx/cmd/web/handlers.go:168:         logoutUser              0.0%
+github.com/tullo/snptx/cmd/web/helpers.go:13:           ping                    100.0%
+github.com/tullo/snptx/cmd/web/helpers.go:17:           serverError             100.0%
+github.com/tullo/snptx/cmd/web/helpers.go:24:           clientError             100.0%
+github.com/tullo/snptx/cmd/web/helpers.go:28:           notFound                100.0%
+github.com/tullo/snptx/cmd/web/helpers.go:32:           addDefaultData          85.7%
+github.com/tullo/snptx/cmd/web/helpers.go:52:           isAuthenticated         75.0%
+github.com/tullo/snptx/cmd/web/helpers.go:61:           render                  60.0%
+github.com/tullo/snptx/cmd/web/main.go:41:              main                    0.0%
+github.com/tullo/snptx/cmd/web/main.go:104:             openDB                  0.0%
+github.com/tullo/snptx/cmd/web/middleware.go:13:        secureHeaders           100.0%
+github.com/tullo/snptx/cmd/web/middleware.go:23:        noSurf                  100.0%
+github.com/tullo/snptx/cmd/web/middleware.go:34:        logRequest              100.0%
+github.com/tullo/snptx/cmd/web/middleware.go:43:        recoverPanic            66.7%
+github.com/tullo/snptx/cmd/web/middleware.go:62:        requireAuthentication   16.7%
+github.com/tullo/snptx/cmd/web/middleware.go:77:        authenticate            33.3%
+github.com/tullo/snptx/cmd/web/routes.go:10:            routes                  100.0%
+github.com/tullo/snptx/cmd/web/templates.go:22:         humanDate               100.0%
+github.com/tullo/snptx/cmd/web/templates.go:35:         newTemplateCache        76.5%
+github.com/tullo/snptx/pkg/models/mysql/snippets.go:16: Insert                  0.0%
+github.com/tullo/snptx/pkg/models/mysql/snippets.go:37: Get                     0.0%
+github.com/tullo/snptx/pkg/models/mysql/snippets.go:57: Latest                  0.0%
+github.com/tullo/snptx/pkg/models/mysql/users.go:19:    Insert                  0.0%
+github.com/tullo/snptx/pkg/models/mysql/users.go:43:    Authenticate            0.0%
+github.com/tullo/snptx/pkg/models/mysql/users.go:75:    Get                     87.5%
+total:                          (statements)    41.1%
+
+
+# A more visual way to view the coverage profile is to use the -html flag
+$ go tool cover -html=/tmp/profile.out
+
+
+# using `-covermode=count` or `-covermode=atomic` makes the coverage profile record the exact
+# number of times that each statement is executed during the tests.
+$ go test -covermode=count -coverprofile=/tmp/profile.out ./...
+# statements which are executed more frequently are then shown in a more saturated shade of green
+$ go tool cover -html=/tmp/profile.out
+```
