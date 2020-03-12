@@ -196,3 +196,25 @@ minica --domains localhost
 ### Security/Server Side TLS
 
 [Recommended configurations](https://wiki.mozilla.org/Security/Server_Side_TLS) for modern clients that support TLS 1.3, with no need for backwards compatibility.
+
+### Require authentication for specific routes
+
+```bash
+# === [GET /snippet/create] ===================================================
+$ curl --include --insecure https://localhost:4200/snippet/create
+HTTP/2 303
+content-type: text/html; charset=utf-8
+location: /user/login
+...
+<a href="/user/login">See Other</a>.
+# === [POST /snippet/create] ==================================================
+$ curl --include --insecure -X POST https://localhost:4200/snippet/create
+HTTP/2 303
+location: /user/login
+...
+# === [POST /user/logout] =====================================================
+$ curl --include --insecure -X POST https://localhost:4200/user/logout
+HTTP/2 303
+location: /user/login
+...
+```
