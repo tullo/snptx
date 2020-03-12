@@ -22,6 +22,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (app *application) about(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "about.page.tmpl", &templateData{})
+}
+
 func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	// pat does not strip the colon from the named capture key,
 	// get the value of ":id" from the query string instead of "id"
