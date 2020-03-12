@@ -176,3 +176,19 @@ func (app *application) logoutUser(w http.ResponseWriter, r *http.Request) {
 	app.session.Put(r, "flash", "You've been logged out successfully!")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
+
+func (app *application) userProfile(w http.ResponseWriter, r *http.Request) {
+	// get user ID from session data
+	userID := app.session.GetInt(r, "authenticatedUserID")
+
+	// retreive user details from the database
+	user, err := app.users.Get(userID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	//fmt.Fprintf(w, "%+v", user)
+	app.render(w, r, "profile.page.tmpl", &templateData{
+		User: user,
+	})
+}
