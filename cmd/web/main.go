@@ -16,6 +16,9 @@ import (
 	"github.com/tullo/snptx/pkg/models/mysql"
 )
 
+// build is the git version of this application. It is set using build flags in the makefile.
+var build = "develop"
+
 // the key must be unexported type to avoid collisions
 type contextKey string
 
