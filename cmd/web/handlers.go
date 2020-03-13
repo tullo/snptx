@@ -141,6 +141,8 @@ func (app *application) loginUserForm(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// loginUser checks the provided credentials and redirects the client to the
+// requested path
 func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
@@ -164,6 +166,13 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 
 	// Add the ID of the current user to the session data (user loged in)
 	app.session.Put(r, "authenticatedUserID", id)
+
+	// pop the captured path from the session data
+	path := app.session.PopString(r, "redirectPathAfterLogin")
+	if path != "" {
+		http.Redirect(w, r, path, http.StatusSeeOther)
+		return
+	}
 
 	// Redirect the user to the create snippet page.
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
