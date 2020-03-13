@@ -16,6 +16,7 @@ import (
 	"github.com/tullo/snptx/pkg/models/mysql"
 )
 
+// the key must be unexported type to avoid collisions
 type contextKey string
 
 const contextKeyIsAuthenticated = contextKey("isAuthenticated")
@@ -69,7 +70,8 @@ func main() {
 	// sessions expire after 12 hours
 	session := sessions.New([]byte(*secret))
 	session.Lifetime = 12 * time.Hour
-	// set the secure flag on session cookies
+	// set the secure flag on session cookies and
+	// serve all requests over https in production environment
 	session.Secure = true
 	session.SameSite = http.SameSiteStrictMode
 
