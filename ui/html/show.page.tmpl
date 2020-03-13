@@ -3,6 +3,7 @@
 {{define "title"}}Snippet #{{.Snippet.ID}}{{end}}
 
 {{define "main"}}
+    <h2>Snippet: {{.Snippet.Title}}</h2>
     {{with .Snippet}}
     <div class='snippet'>
         <div class='metadata'>
