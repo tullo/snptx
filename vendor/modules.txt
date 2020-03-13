@@ -1,0 +1,23 @@
+# github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40
+## explicit
+github.com/bmizerany/pat
+# github.com/go-sql-driver/mysql v1.5.0
+## explicit
+github.com/go-sql-driver/mysql
+# github.com/golangcollege/sessions v1.1.0
+## explicit
+github.com/golangcollege/sessions
+# github.com/justinas/alice v1.2.0
+## explicit
+github.com/justinas/alice
+# github.com/justinas/nosurf v1.1.0
+## explicit
+github.com/justinas/nosurf
+# golang.org/x/crypto v0.0.0-20181009213950-7c1a557ab941
+## explicit
+golang.org/x/crypto/bcrypt
+golang.org/x/crypto/blowfish
+golang.org/x/crypto/internal/subtle
+golang.org/x/crypto/nacl/secretbox
+golang.org/x/crypto/poly1305
+golang.org/x/crypto/salsa20/salsa
