@@ -40,6 +40,14 @@ go test
   * go test -run="TestSignupUser" -count=1 ./cmd/web
   * go clean -testcache
 
+## Debug Mode
+
+Activate debug mode to get detailed errors and stack traces in the http response.
+
+```bash
+go run ./cmd/web -debug
+```
+
 ## Decoupled Logging
 
 ```bash

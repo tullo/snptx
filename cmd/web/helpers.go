@@ -16,7 +16,15 @@ func ping(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) serverError(w http.ResponseWriter, err error) {
 	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	// go one step back in the stack trace to get the file name and line number
 	app.errorLog.Output(2, trace)
+
+	// when running in debug mode,
+	// write detailed errors and stack traces to the http response
+	if app.debug {
+		http.Error(w, trace, http.StatusInternalServerError)
+		return
+	}
 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }

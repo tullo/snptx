@@ -22,6 +22,7 @@ const contextKeyIsAuthenticated = contextKey("isAuthenticated")
 
 // define the interfaces inline to keep the code simple
 type application struct {
+	debug    bool
 	errorLog *log.Logger
 	infoLog  *log.Logger
 	session  *sessions.Session
@@ -41,9 +42,10 @@ type application struct {
 
 func main() {
 	addr := flag.String("addr", ":4200", "HTTP network address")
+	debug := flag.Bool("debug", false, "Enable debug mode")
 	// force the db driver to convert TIME and DATE fields to time.Time (parseTime=true)
 	dsn := flag.String("dsn", "web:snptx@tcp(0.0.0.0:3306)/snptx?parseTime=true", "MySQL data source name")
-	// session secret (should be 32 bytes long) used to encrypt and authenticate session cookies
+	// session secret (should be 32 bytes long) is used to encrypt and authenticate session cookies
 	// e.g. 'openssl rand -base64 32'
 	secret := flag.String("secret", "un/MjLYrdgFiQxAHDge/lI/kydfyZRo4T0UF+Mn4xag=", "Secret key")
 
@@ -72,6 +74,7 @@ func main() {
 	session.SameSite = http.SameSiteStrictMode
 
 	app := &application{
+		debug:         *debug,
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		session:       session,
