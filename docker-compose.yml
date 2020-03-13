@@ -1,12 +1,16 @@
-version: '2'
+version: '3'
+
+networks:
+  shared-network:
+    driver: bridge
+
 services:
   db:
-    image: mysql:8
-    restart: always
+    container_name: web_db
+    networks:
+      - shared-network
+    image: postgres:12.2-alpine
     ports:
-      - 3306:3306
+      - 5432:5432
     environment:
-      MYSQL_ROOT_PASSWORD: rootpw
-      MYSQL_DATABASE: snptx
-      MYSQL_USER: snptx
-      MYSQL_PASSWORD: snptx
+      - POSTGRES_PASSWORD=postgres

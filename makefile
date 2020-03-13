@@ -8,6 +8,9 @@ export DOCKER_BUILDKIT = 1
 
 all: snptx
 
+migrate:
+	go run ./cmd/web-admin/main.go --db-disable-tls=1 migrate
+
 snptx:
 	docker build \
 		-f Dockerfile \
