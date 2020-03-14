@@ -108,8 +108,14 @@ go get github.com/justinas/nosurf
 go mod tidy     # removes unused packages from go.mod and go.sum
 go mod verify   # verify checksums of the downloaded packages
 go mod download # errors if mismatch between dependencies and checksums
-go get -u ...   # upgrade to latest available minor or patch release of a package
+go list -mod=readonly -m all # to view final versions that will be used in a build for all direct and indirect dependencies
+go mod why -m google.golang.org/appengine
+go list -u -m all # to view available minor and patch upgrades for all direct and indirect dependencies
+go get -u ...   # to upgrade to latest available minor or patch release of a package
 go get -u github.com/foo/bar@v2.0.0
+go get foo@v1.6.2, go get foo@e3702bed2, go get foo@'<v1.6.2' # @version suffix or "module query"
+go get -u=patch ./... # to use the latest patch releases (-t to also upgrade test dependencies)
+go list -mod=mod -m all
 ```
 
 ## DB preparation
@@ -373,4 +379,11 @@ $ go tool cover -html=/tmp/profile.out
 $ go test -covermode=count -coverprofile=/tmp/profile.out ./...
 # statements which are executed more frequently are then shown in a more saturated shade of green
 $ go tool cover -html=/tmp/profile.out
+```
+
+## Git
+
+```bash
+git lg
+git log -u -1 43029e0
 ```

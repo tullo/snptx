@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"time"
 )
 
 var (
@@ -15,22 +14,3 @@ var (
 	// email address that's already in use
 	ErrDuplicateEmail = errors.New("models: duplicate email")
 )
-
-// Snippet is an item we manage
-type Snippet struct {
-	ID      int
-	Title   string
-	Content string
-	Created time.Time
-	Expires time.Time
-}
-
-// User represents someone with access to our system.
-type User struct {
-	ID             int
-	Name           string
-	Email          string
-	HashedPassword []byte
-	Created        time.Time
-	Active         bool
-}
