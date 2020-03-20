@@ -12,6 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/platform/auth"
+	"github.com/tullo/snptx/pkg/models"
 )
 
 const usersCollection = "users"
@@ -61,6 +62,7 @@ func Create(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, 
 		ID:           uuid.New().String(),
 		Name:         n.Name,
 		Email:        n.Email,
+		Active:       true,
 		PasswordHash: hash,
 		Roles:        n.Roles,
 		DateCreated:  now.UTC(),
@@ -68,11 +70,11 @@ func Create(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, 
 	}
 
 	const q = `INSERT INTO users
-		(user_id, name, email, password_hash, roles, date_created, date_updated)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`
+		(user_id, name, email, active, password_hash, roles, date_created, date_updated)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	_, err = db.ExecContext(
 		ctx, q,
-		u.ID, u.Name, u.Email,
+		u.ID, u.Name, u.Email, u.Active,
 		u.PasswordHash, u.Roles,
 		u.DateCreated, u.DateUpdated,
 	)
@@ -201,4 +203,33 @@ func Authenticate(ctx context.Context, db *sqlx.DB, now time.Time, email, passwo
 	// and generate their token.
 	claims := auth.NewClaims(u.ID, u.Roles, now, time.Hour)
 	return claims, nil
+}
+
+// ChangePassword ...
+func ChangePassword(ctx context.Context, db *sqlx.DB, id string, currentPassword, newPassword string) error {
+
+	user, err := Retrieve(ctx, db, id)
+	if err != nil {
+		return err
+	}
+
+	// compare the provided password with the saved hash
+	err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(currentPassword))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return models.ErrInvalidCredentials
+		}
+		return err
+	}
+
+	// generate hash based on the new password
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+	if err != nil {
+		return err
+	}
+
+	// persist the new hash
+	stmt := "UPDATE users SET password_hash = $1 WHERE user_id = $2"
+	_, err = db.Exec(stmt, string(newPasswordHash), id)
+	return err
 }

@@ -28,7 +28,7 @@ jobs:
 
     - name: Run builds
       run: |
-        go build ./cmd/web
+        go build ./cmd/snptx
 
     - name: Run tests
       run: |

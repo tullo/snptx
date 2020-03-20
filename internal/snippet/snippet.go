@@ -31,8 +31,8 @@ func Create(ctx context.Context, db *sqlx.DB, n NewSnippet, now time.Time) (*Sni
 		Title:       n.Title,
 		Content:     n.Content,
 		DateExpires: n.DateExpires,
-		DateCreated: now.UTC(),
-		DateUpdated: now.UTC(),
+		DateCreated: now,
+		DateUpdated: now,
 	}
 
 	const q = `INSERT INTO snippets
@@ -130,7 +130,8 @@ func Latest(ctx context.Context, db *sqlx.DB) ([]Snippet, error) {
 	defer span.End()
 
 	snippets := []Snippet{}
-	const q = `SELECT * FROM snippets`
+	const q = `SELECT * FROM snippets
+		WHERE date_expires > NOW() ORDER BY date_created DESC LIMIT 10;`
 	if err := db.SelectContext(ctx, &snippets, q); err != nil {
 		return nil, errors.Wrap(err, "selecting snippets")
 	}

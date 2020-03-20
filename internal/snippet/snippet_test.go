@@ -20,15 +20,15 @@ func TestSnippet(t *testing.T) {
 		t.Log("\tWhen handling a single Snippet.")
 		{
 			ctx := tests.Context()
-			now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
-
+			now := time.Now()
+			now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 			//oneDayLater := now.AddDate(0, 0, 1)
 			//oneMonthLater := now.AddDate(0, 1, 0)
 			oneYearLater := now.AddDate(1, 0, 0)
 
 			ns := snippet.NewSnippet{
-				Title:       "ffgdfg",
-				Content:     "fdgdsg",
+				Title:       "Foo",
+				Content:     "Foo bar baz",
 				DateExpires: oneYearLater,
 			}
 
@@ -60,8 +60,8 @@ func TestSnippet(t *testing.T) {
 
 			addMonthDay := oneYearLater.AddDate(0, 1, 0)
 			upd := snippet.UpdateSnippet{
-				Title:       tests.StringPointer("Jacob Walker"),
-				Content:     tests.StringPointer("jacob@ardanlabs.com"),
+				Title:       tests.StringPointer("Some Day"),
+				Content:     tests.StringPointer("Some Day ..."),
 				DateExpires: &addMonthDay,
 			}
 			if err := snippet.Update(ctx, db, s.ID, upd, now); err != nil {

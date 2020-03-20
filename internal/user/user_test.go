@@ -24,11 +24,11 @@ func TestUser(t *testing.T) {
 			now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
 
 			nu := user.NewUser{
-				Name:            "Bill Kennedy",
-				Email:           "bill@ardanlabs.com",
+				Name:            "Andreas Amstutz",
+				Email:           "me@amstutz-it.dk",
 				Roles:           []string{auth.RoleAdmin},
-				Password:        "gophers",
-				PasswordConfirm: "gophers",
+				Password:        "gopher",
+				PasswordConfirm: "gopher",
 			}
 
 			u, err := user.Create(ctx, db, nu, now)
@@ -49,8 +49,8 @@ func TestUser(t *testing.T) {
 			t.Logf("\t%s\tShould get back the same user.", tests.Success)
 
 			upd := user.UpdateUser{
-				Name:  tests.StringPointer("Jacob Walker"),
-				Email: tests.StringPointer("jacob@ardanlabs.com"),
+				Name:  tests.StringPointer("Andreas Amstutz"),
+				Email: tests.StringPointer("me@amstutz-it.dk"),
 			}
 
 			if err := user.Update(ctx, db, u.ID, upd, now); err != nil {
@@ -106,8 +106,8 @@ func TestAuthenticate(t *testing.T) {
 			ctx := tests.Context()
 
 			nu := user.NewUser{
-				Name:            "Anna Walker",
-				Email:           "anna@ardanlabs.com",
+				Name:            "Andreas Amstutz",
+				Email:           "me@amstutz-it.dk",
 				Roles:           []string{auth.RoleAdmin},
 				Password:        "goroutines",
 				PasswordConfirm: "goroutines",
@@ -121,7 +121,7 @@ func TestAuthenticate(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould be able to create user.", tests.Success)
 
-			claims, err := user.Authenticate(ctx, db, now, "anna@ardanlabs.com", "goroutines")
+			claims, err := user.Authenticate(ctx, db, now, "me@amstutz-it.dk", "goroutines")
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to generate claims : %s.", tests.Failed, err)
 			}

@@ -2,29 +2,29 @@
 
 go run
 
-* `go run ./cmd/web`
-* `go run ./cmd/web -addr :80`
-* `go run ./cmd/web -addr=:80`
+* `go run ./cmd/snptx`
+* `go run ./cmd/snptx -addr :80`
+* `go run ./cmd/snptx -addr=:80`
 * `export SNPTX_ADDR=":9999"`
-* `go run ./cmd/web -addr=$SNPTX_ADDR`
+* `go run ./cmd/snptx -addr=$SNPTX_ADDR`
 * `go run github.com/tullo/snptx`
 
 go build
 
 directories named `testdata` `_` `.`  will be ignored when compiling Go binaries
 
-* `go build ./cmd/web`
+* `go build ./cmd/snptx`
 * `./web`
-* `go build -o app ./cmd/web`
+* `go build -o app ./cmd/snptx`
 * `./app`
 
 go test
 
 * `go test ./...`
-* `go test -v ./cmd/web`
-* `go test -failfast -v ./cmd/web`
-* `go test -run TestSecureHeaders ./cmd/web`
-* `go test -run="^TestHumanDate$/^UTC|CET$" ./cmd/web`
+* `go test -v ./cmd/snptx`
+* `go test -failfast -v ./cmd/snptx`
+* `go test -run TestSecureHeaders ./cmd/snptx`
+* `go test -run="^TestHumanDate$/^UTC|CET$" ./cmd/snptx`
 * skip long running tests if the `-short` flag is provided
   * `if testing.Short() { t.Skip("xyz") }`
   * `go test -short ./pkg/models`
@@ -32,12 +32,12 @@ go test
 * enabling the race detector
   * flags data races at runtime - no static analysis
   * increases overall running time of tests
-  * `go test -race ./cmd/web`
+  * `go test -race ./cmd/snptx`
 * parallel tests marked using `t.Parallel()`
   * uses all available processors per default
-  * `go test -parallel 4 ./cmd/web`
+  * `go test -parallel 4 ./cmd/snptx`
 * antidote for cached test results
-  * go test -run="TestSignupUser" -count=1 ./cmd/web
+  * go test -run="TestSignupUser" -count=1 ./cmd/snptx
   * go clean -testcache
 
 ## Debug Mode
@@ -45,14 +45,14 @@ go test
 Activate debug mode to get detailed errors and stack traces in the http response.
 
 ```bash
-go run ./cmd/web -debug
+go run ./cmd/snptx -debug
 ```
 
 ## Decoupled Logging
 
 ```bash
 # redirect the stdout and stderr streams to on-disk files
-go run ./cmd/web >>/tmp/info.log 2>>/tmp/error.log
+go run ./cmd/snptx >>/tmp/info.log 2>>/tmp/error.log
 ```
 
 ## Serving static content
@@ -108,8 +108,14 @@ go get github.com/justinas/nosurf
 go mod tidy     # removes unused packages from go.mod and go.sum
 go mod verify   # verify checksums of the downloaded packages
 go mod download # errors if mismatch between dependencies and checksums
-go get -u ...   # upgrade to latest available minor or patch release of a package
+go list -mod=readonly -m all # to view final versions that will be used in a build for all direct and indirect dependencies
+go mod why -m google.golang.org/appengine
+go list -u -m all # to view available minor and patch upgrades for all direct and indirect dependencies
+go get -u ...   # to upgrade to latest available minor or patch release of a package
 go get -u github.com/foo/bar@v2.0.0
+go get foo@v1.6.2, go get foo@e3702bed2, go get foo@'<v1.6.2' # @version suffix or "module query"
+go get -u=patch ./... # to use the latest patch releases (-t to also upgrade test dependencies)
+go list -mod=mod -m all
 ```
 
 ## DB preparation
@@ -319,7 +325,7 @@ Get a detailed breakdown of test coverage by method and function
 ```bash
 $ go test -coverprofile=/tmp/profile.out ./...
 
-ok  github.com/tullo/snptx/cmd/web  0.020s  coverage: 51.0% of statements
+ok  github.com/tullo/snptx/cmd/snptx  0.020s  coverage: 51.0% of statements
 ?   github.com/tullo/snptx/pkg/forms    [no test files]
 ?   github.com/tullo/snptx/pkg/models   [no test files]
 ?   github.com/tullo/snptx/pkg/models/mock  [no test files]
@@ -328,33 +334,33 @@ ok  github.com/tullo/snptx/pkg/models/mysql 1.530s  coverage: 10.6% of statement
 
 $ go tool cover -func=/tmp/profile.out
 
-github.com/tullo/snptx/cmd/web/handlers.go:13:          home                    0.0%
-github.com/tullo/snptx/cmd/web/handlers.go:25:          showSnippet             100.0%
-github.com/tullo/snptx/cmd/web/handlers.go:50:          createSnippetForm       0.0%
-github.com/tullo/snptx/cmd/web/handlers.go:57:          createSnippet           0.0%
-github.com/tullo/snptx/cmd/web/handlers.go:93:          signupUserForm          100.0%
-github.com/tullo/snptx/cmd/web/handlers.go:99:          signupUser              86.4%
-github.com/tullo/snptx/cmd/web/handlers.go:134:         loginUserForm           0.0%
-github.com/tullo/snptx/cmd/web/handlers.go:140:         loginUser               0.0%
-github.com/tullo/snptx/cmd/web/handlers.go:168:         logoutUser              0.0%
-github.com/tullo/snptx/cmd/web/helpers.go:13:           ping                    100.0%
-github.com/tullo/snptx/cmd/web/helpers.go:17:           serverError             100.0%
-github.com/tullo/snptx/cmd/web/helpers.go:24:           clientError             100.0%
-github.com/tullo/snptx/cmd/web/helpers.go:28:           notFound                100.0%
-github.com/tullo/snptx/cmd/web/helpers.go:32:           addDefaultData          85.7%
-github.com/tullo/snptx/cmd/web/helpers.go:52:           isAuthenticated         75.0%
-github.com/tullo/snptx/cmd/web/helpers.go:61:           render                  60.0%
-github.com/tullo/snptx/cmd/web/main.go:41:              main                    0.0%
-github.com/tullo/snptx/cmd/web/main.go:104:             openDB                  0.0%
-github.com/tullo/snptx/cmd/web/middleware.go:13:        secureHeaders           100.0%
-github.com/tullo/snptx/cmd/web/middleware.go:23:        noSurf                  100.0%
-github.com/tullo/snptx/cmd/web/middleware.go:34:        logRequest              100.0%
-github.com/tullo/snptx/cmd/web/middleware.go:43:        recoverPanic            66.7%
-github.com/tullo/snptx/cmd/web/middleware.go:62:        requireAuthentication   16.7%
-github.com/tullo/snptx/cmd/web/middleware.go:77:        authenticate            33.3%
-github.com/tullo/snptx/cmd/web/routes.go:10:            routes                  100.0%
-github.com/tullo/snptx/cmd/web/templates.go:22:         humanDate               100.0%
-github.com/tullo/snptx/cmd/web/templates.go:35:         newTemplateCache        76.5%
+github.com/tullo/snptx/cmd/snptx/handlers.go:13:          home                    0.0%
+github.com/tullo/snptx/cmd/snptx/handlers.go:25:          showSnippet             100.0%
+github.com/tullo/snptx/cmd/snptx/handlers.go:50:          createSnippetForm       0.0%
+github.com/tullo/snptx/cmd/snptx/handlers.go:57:          createSnippet           0.0%
+github.com/tullo/snptx/cmd/snptx/handlers.go:93:          signupUserForm          100.0%
+github.com/tullo/snptx/cmd/snptx/handlers.go:99:          signupUser              86.4%
+github.com/tullo/snptx/cmd/snptx/handlers.go:134:         loginUserForm           0.0%
+github.com/tullo/snptx/cmd/snptx/handlers.go:140:         loginUser               0.0%
+github.com/tullo/snptx/cmd/snptx/handlers.go:168:         logoutUser              0.0%
+github.com/tullo/snptx/cmd/snptx/helpers.go:13:           ping                    100.0%
+github.com/tullo/snptx/cmd/snptx/helpers.go:17:           serverError             100.0%
+github.com/tullo/snptx/cmd/snptx/helpers.go:24:           clientError             100.0%
+github.com/tullo/snptx/cmd/snptx/helpers.go:28:           notFound                100.0%
+github.com/tullo/snptx/cmd/snptx/helpers.go:32:           addDefaultData          85.7%
+github.com/tullo/snptx/cmd/snptx/helpers.go:52:           isAuthenticated         75.0%
+github.com/tullo/snptx/cmd/snptx/helpers.go:61:           render                  60.0%
+github.com/tullo/snptx/cmd/snptx/main.go:41:              main                    0.0%
+github.com/tullo/snptx/cmd/snptx/main.go:104:             openDB                  0.0%
+github.com/tullo/snptx/cmd/snptx/middleware.go:13:        secureHeaders           100.0%
+github.com/tullo/snptx/cmd/snptx/middleware.go:23:        noSurf                  100.0%
+github.com/tullo/snptx/cmd/snptx/middleware.go:34:        logRequest              100.0%
+github.com/tullo/snptx/cmd/snptx/middleware.go:43:        recoverPanic            66.7%
+github.com/tullo/snptx/cmd/snptx/middleware.go:62:        requireAuthentication   16.7%
+github.com/tullo/snptx/cmd/snptx/middleware.go:77:        authenticate            33.3%
+github.com/tullo/snptx/cmd/snptx/routes.go:10:            routes                  100.0%
+github.com/tullo/snptx/cmd/snptx/templates.go:22:         humanDate               100.0%
+github.com/tullo/snptx/cmd/snptx/templates.go:35:         newTemplateCache        76.5%
 github.com/tullo/snptx/pkg/models/mysql/snippets.go:16: Insert                  0.0%
 github.com/tullo/snptx/pkg/models/mysql/snippets.go:37: Get                     0.0%
 github.com/tullo/snptx/pkg/models/mysql/snippets.go:57: Latest                  0.0%
@@ -373,4 +379,11 @@ $ go tool cover -html=/tmp/profile.out
 $ go test -covermode=count -coverprofile=/tmp/profile.out ./...
 # statements which are executed more frequently are then shown in a more saturated shade of green
 $ go tool cover -html=/tmp/profile.out
+```
+
+## Git
+
+```bash
+git lg
+git log -u -1 43029e0
 ```
