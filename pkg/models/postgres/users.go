@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/user"
+	"github.com/tullo/snptx/pkg/models"
 )
 
 // UserModel wraps a sql.DB connection pool
@@ -37,6 +39,9 @@ func (m *UserModel) Authenticate(email, password string) (string, error) {
 
 	claims, err := user.Authenticate(context.Background(), m.DB, time.Now(), email, password)
 	if err != nil {
+		if errors.Is(err, user.ErrAuthenticationFailure) {
+			return "", models.ErrInvalidCredentials
+		}
 		return "", err
 	}
 	return claims.Subject, nil

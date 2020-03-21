@@ -66,6 +66,54 @@ func TestShowSnippet(t *testing.T) {
 	}
 }
 
+func TestLoginUser(t *testing.T) {
+	app := newTestApplication(t)
+
+	// start up a https test server
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	// make a GET /user/login request
+	_, _, body := ts.get(t, "/user/login")
+
+	// extract the CSRF token from the response body (html signup form)
+	csrfToken := extractCSRFToken(t, body)
+
+	tests := []struct {
+		name         string
+		userEmail    string
+		userPassword string
+		csrfToken    string
+		wantCode     int
+		wantBody     []byte
+	}{
+		{"Valid submission", "user@example.com", "gophers", csrfToken, http.StatusOK, nil},
+		{"Empty email", "", "gophers", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
+		{"Empty password", "user@example.com", "", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
+		{"Invalid password", "user@example.com", "FooBarBaz", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
+		{"Invalid CSRF Token", "", "", "wrongToken", http.StatusBadRequest, nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			form := url.Values{}
+			form.Add("email", tt.userEmail)
+			form.Add("password", tt.userPassword)
+			form.Add("csrf_token", tt.csrfToken)
+
+			code, _, body := ts.postForm(t, "/user/login", form)
+
+			if code != tt.wantCode {
+				t.Errorf("want %d; got %d", tt.wantCode, code)
+			}
+
+			if !bytes.Contains(body, tt.wantBody) {
+				t.Errorf("want body %s to contain %q", body, tt.wantBody)
+			}
+		})
+	}
+}
+
 func TestSignupUser(t *testing.T) {
 	app := newTestApplication(t)
 

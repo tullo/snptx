@@ -105,6 +105,15 @@ func TestAuthenticate(t *testing.T) {
 		{
 			ctx := tests.Context()
 
+			now := time.Date(2020, time.March, 21, 0, 0, 0, 0, time.UTC)
+			claims, err := user.Authenticate(ctx, db, now, "me@amstutz-it.dk", "goroutines")
+			if err != nil {
+				if !errors.Is(err, user.ErrAuthenticationFailure) {
+					t.Fatalf("\t%s\tNon-existing user should NOT be able to authenticate  : %s.", tests.Failed, err)
+				}
+			}
+			t.Logf("\t%s\tNon-existing user should NOT be able to authenticate.", tests.Success)
+
 			nu := user.NewUser{
 				Name:            "Andreas Amstutz",
 				Email:           "me@amstutz-it.dk",
@@ -113,15 +122,13 @@ func TestAuthenticate(t *testing.T) {
 				PasswordConfirm: "goroutines",
 			}
 
-			now := time.Date(2018, time.October, 1, 0, 0, 0, 0, time.UTC)
-
 			u, err := user.Create(ctx, db, nu, now)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to create user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to create user.", tests.Success)
 
-			claims, err := user.Authenticate(ctx, db, now, "me@amstutz-it.dk", "goroutines")
+			claims, err = user.Authenticate(ctx, db, now, "me@amstutz-it.dk", "goroutines")
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to generate claims : %s.", tests.Failed, err)
 			}
@@ -137,6 +144,15 @@ func TestAuthenticate(t *testing.T) {
 				t.Fatalf("\t%s\tShould get back the expected claims. Diff:\n%s", tests.Failed, diff)
 			}
 			t.Logf("\t%s\tShould get back the expected claims.", tests.Success)
+
+			claims, err = user.Authenticate(ctx, db, now, "me@amstutz-it.dk", "wrong-password")
+			if err != nil {
+				if !errors.Is(err, user.ErrAuthenticationFailure) {
+					t.Fatalf("\t%s\tShould NOT be able to generate claims : %s.", tests.Failed, err)
+				}
+			}
+			t.Logf("\t%s\tShould NOT be able to generate claims.", tests.Success)
+
 		}
 	}
 }
