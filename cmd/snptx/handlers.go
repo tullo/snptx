@@ -213,8 +213,12 @@ func (app *application) changePassword(w http.ResponseWriter, r *http.Request) {
 	form := forms.New(r.PostForm)
 	form.Required("currentPassword", "newPassword", "newPasswordConfirmation")
 	form.MinLength("newPassword", 10)
+	form.MinLength("newPasswordConfirmation", 10)
 	if form.Get("newPassword") != form.Get("newPasswordConfirmation") {
 		form.Errors.Add("newPasswordConfirmation", "Passwords do not match")
+	}
+	if form.Get("currentPassword") == form.Get("newPassword") {
+		form.Errors.Add("newPassword", "Your new password must not match your previous")
 	}
 
 	if !form.Valid() {
@@ -236,6 +240,7 @@ func (app *application) changePassword(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
 	// add flash message to the session data
 	app.session.Put(r, "flash", "Your password has been updated!")
 	// redirect browser to the users profile page

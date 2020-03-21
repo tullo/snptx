@@ -87,10 +87,10 @@ func TestLoginUser(t *testing.T) {
 		wantCode     int
 		wantBody     []byte
 	}{
-		{"Valid submission", "user@example.com", "gophers", csrfToken, http.StatusOK, nil},
-		{"Empty email", "", "gophers", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
-		{"Empty password", "user@example.com", "", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
-		{"Invalid password", "user@example.com", "FooBarBaz", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
+		{"Valid Submission", "alice@example.com", "validPa$$word", csrfToken, http.StatusSeeOther, nil},
+		{"Empty Email", "", "validPa$$word", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
+		{"Empty Password", "alice@example.com", "", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
+		{"Invalid Password", "alice@example.com", "FooBarBaz", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
 		{"Invalid CSRF Token", "", "", "wrongToken", http.StatusBadRequest, nil},
 	}
 
@@ -112,6 +112,109 @@ func TestLoginUser(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestChangePassword(t *testing.T) {
+	app := newTestApplication(t)
+
+	// start up a https test server
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	// make a GET /user/login request
+	_, _, body := ts.get(t, "/user/login")
+
+	// extract the CSRF token from the response body (html login form)
+	csrfToken := extractCSRFToken(t, body)
+
+	form := url.Values{}
+	form.Add("email", "alice@example.com")
+	form.Add("password", "validPa$$word")
+	form.Add("csrf_token", csrfToken)
+
+	code, _, _ := ts.postForm(t, "/user/login", form)
+	if code != http.StatusSeeOther {
+		t.Errorf("want %d; got %d", http.StatusSeeOther, code)
+	}
+
+	/*
+		u, _ := url.Parse(ts.URL + "/")
+		for _, cookie := range ts.Client().Jar.Cookies(u) {
+			fmt.Printf("  %s: %s\n", cookie.Name, cookie.Value)
+		}
+	*/
+
+	tests := []struct {
+		name                    string
+		userEmail               string
+		currentPassword         string
+		newPassword             string
+		newPasswordConfirmation string
+		csrfToken               string
+		wantCode                int
+		wantBody                []byte
+	}{
+		{
+			"Invalid CSRF Token", "", "", "", "", "wrongToken", http.StatusBadRequest, nil,
+		},
+		{
+			"Blank Current Password", "alice@example.com", "", "someRandomString", "someRandomString",
+			csrfToken, http.StatusOK, []byte("This field cannot be blank"),
+		},
+		{
+			"Invalid Current Password", "alice@example.com", "GophersAreCute", "someRandomString",
+			"someRandomString", csrfToken, http.StatusOK, []byte("Current password is incorrect"),
+		},
+		{
+			"Invalid New Password 1", "alice@example.com", "validPa$$word", "gophers", "gophers",
+			csrfToken, http.StatusOK, []byte("This field is too short (minimum is 10 characters)"),
+		},
+		{
+			"Invalid New Password 2", "alice@example.com", "validPa$$word", "someRandomString", "gophers",
+			csrfToken, http.StatusOK, []byte("This field is too short (minimum is 10 characters)"),
+		},
+		{
+			"Invalid New Password 3", "alice@example.com", "validPa$$word", "someRandomString", "gophers",
+			csrfToken, http.StatusOK, []byte("This field is too short (minimum is 10 characters)"),
+		},
+		{
+			"Invalid New Password 4", "alice@example.com", "validPa$$word", "someRandomString", "anotherRandomString",
+			csrfToken, http.StatusOK, []byte("Passwords do not match"),
+		},
+		{
+			"Invalid New Password 5", "alice@example.com", "validPa$$word", "validPa$$word", "validPa$$word",
+			csrfToken, http.StatusOK, []byte("Your new password must not match your previous"),
+		},
+		{
+			"Valid Submission", "alice@example.com", "validPa$$word", "sup3rs3cr3t", "sup3rs3cr3t",
+			csrfToken, http.StatusSeeOther, nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			form := url.Values{}
+			form.Add("email", tt.userEmail)
+			form.Add("currentPassword", tt.currentPassword)
+			form.Add("newPassword", tt.newPassword)
+			form.Add("newPasswordConfirmation", tt.newPasswordConfirmation)
+			form.Add("csrf_token", tt.csrfToken)
+
+			code, _, body := ts.postForm(t, "/user/change-password", form)
+			//fmt.Println(code, string(body))
+			//code, headers, body := ts.postForm(t, "/user/change-password", form)
+			//fmt.Println(code, string(body), headers)
+
+			if code != tt.wantCode {
+				t.Errorf("want %d; got %d", tt.wantCode, code)
+			}
+
+			if !bytes.Contains(body, tt.wantBody) {
+				t.Errorf("want body %s to contain %q", body, tt.wantBody)
+			}
+		})
+	}
+
 }
 
 func TestSignupUser(t *testing.T) {
@@ -207,16 +310,15 @@ func TestCreateSnippetForm(t *testing.T) {
 		// post the form to login the user
 		form := url.Values{}
 		form.Add("email", "alice@example.com")
-		form.Add("password", "")
+		form.Add("password", "validPa$$word")
 		form.Add("csrf_token", csrfToken)
 		ts.postForm(t, "/user/login", form)
 
-		// the authenticated user have access to the create snippet page
+		// authenticated users have access to the create snippet page
 		code, _, body := ts.get(t, "/snippet/create")
 		if code != http.StatusOK {
 			t.Errorf("want %d; got %d", http.StatusOK, code)
 		}
-		//t.Log(string(body))
 
 		// check that the authenticated user is shown the create snippet form
 		formTag := "<form action='/snippet/create' method='POST'>"

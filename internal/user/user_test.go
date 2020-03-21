@@ -9,6 +9,7 @@ import (
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/tests"
 	"github.com/tullo/snptx/internal/user"
+	"github.com/tullo/snptx/pkg/models"
 )
 
 // TestUser validates the full set of CRUD operations on User values.
@@ -153,6 +154,48 @@ func TestAuthenticate(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould NOT be able to generate claims.", tests.Success)
 
+		}
+	}
+}
+
+// TestChangePassword validates the behavior around changing the password for a user.
+func TestChangePassword(t *testing.T) {
+	db, teardown := tests.NewUnit(t)
+	defer teardown()
+
+	t.Log("Given the need to change passwords")
+	{
+		t.Log("\tWhen handling a single User.")
+		{
+			ctx := tests.Context()
+
+			now := time.Date(2020, time.March, 21, 0, 0, 0, 0, time.UTC)
+			nu := user.NewUser{
+				Name:            "Andreas Amstutz",
+				Email:           "me@amstutz-it.dk",
+				Roles:           []string{auth.RoleAdmin},
+				Password:        "goroutines",
+				PasswordConfirm: "goroutines",
+			}
+			u, err := user.Create(ctx, db, nu, now)
+			if err != nil {
+				t.Fatalf("\t%s\tShould be able to create user : %s.", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould be able to create user.", tests.Success)
+
+			err = user.ChangePassword(ctx, db, u.ID, nu.Password, "validPa$$word")
+			if err != nil {
+				t.Fatalf("\t%s\tShould be able to change password : %s.", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould be able to change password.", tests.Success)
+
+			err = user.ChangePassword(ctx, db, u.ID, "invalid existing password", "")
+			if err != nil {
+				if !errors.Is(err, models.ErrInvalidCredentials) {
+					t.Fatalf("\t%s\tShould NOT be able to change password : %s.", tests.Failed, err)
+				}
+			}
+			t.Logf("\t%s\tShould NOT be able to change password.", tests.Success)
 		}
 	}
 }

@@ -15,8 +15,10 @@ var mockUser = &user.User{
 	Active:      true,
 }
 
+// UserModel ...
 type UserModel struct{}
 
+// Insert ...
 func (m *UserModel) Insert(name, email, password string) error {
 	switch email {
 	case "dupe@example.com":
@@ -26,15 +28,21 @@ func (m *UserModel) Insert(name, email, password string) error {
 	}
 }
 
+// Authenticate ...
 func (m *UserModel) Authenticate(email, password string) (string, error) {
 	switch email {
 	case "alice@example.com":
+		if password != "validPa$$word" {
+			return "", models.ErrInvalidCredentials
+		}
 		return "1", nil
+
 	default:
 		return "", models.ErrInvalidCredentials
 	}
 }
 
+// Get ...
 func (m *UserModel) Get(id string) (*user.User, error) {
 	switch id {
 	case "1":
@@ -44,6 +52,11 @@ func (m *UserModel) Get(id string) (*user.User, error) {
 	}
 }
 
+// ChangePassword ...
 func (m *UserModel) ChangePassword(id string, currentPassword, newPassword string) error {
+	if currentPassword != "validPa$$word" {
+		return models.ErrInvalidCredentials
+	}
+
 	return nil
 }
