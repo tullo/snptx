@@ -9,7 +9,10 @@ export DOCKER_BUILDKIT = 1
 all: snptx test-cover-profile test-cover-text
 
 migrate:
-	go run ./cmd/web-admin/main.go --db-disable-tls=1 migrate
+	go run ./cmd/snptx-admin/main.go --db-disable-tls=1 migrate
+
+seed:
+	go run ./cmd/snptx-admin/main.go --db-disable-tls=1 seed
 
 snptx:
 	docker build \
