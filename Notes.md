@@ -22,9 +22,11 @@ go test
 
 * `go test ./...`
 * `go test -v ./cmd/snptx`
+* `go test -v github.com/tullo/snptx/cmd/snptx`
 * `go test -failfast -v ./cmd/snptx`
-* `go test -run TestSecureHeaders ./cmd/snptx`
-* `go test -run="^TestHumanDate$/^UTC|CET$" ./cmd/snptx`
+* `go test ./cmd/snptx -run TestSecureHeaders`
+* `go test ./cmd/snptx -run="^TestHumanDate$/^UTC|CET$"`
+* `go test github.com/tullo/snptx/cmd/snptx -run TestSecureHeaders`
 * skip long running tests if the `-short` flag is provided
   * `if testing.Short() { t.Skip("xyz") }`
   * `go test -short ./pkg/models`
