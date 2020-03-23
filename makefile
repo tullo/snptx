@@ -15,7 +15,7 @@ snptx:
 	docker build \
 		-f Dockerfile \
 		-t $(REGISTRY_HOSTNAME)/$(REGISTRY_ACCOUNT)/snptx-amd64:$(VERSION) \
-		--build-arg PACKAGE_NAME=web \
+		--build-arg PACKAGE_NAME=snptx \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
 		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
 		.
