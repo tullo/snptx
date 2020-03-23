@@ -6,7 +6,7 @@ export REGISTRY_ACCOUNT = tullo
 export VERSION = 0.1.0
 export DOCKER_BUILDKIT = 1
 
-all: snptx test-cover-profile test-cover
+all: snptx test-cover-profile test-cover-text
 
 migrate:
 	go run ./cmd/web-admin/main.go --db-disable-tls=1 migrate
@@ -35,8 +35,11 @@ test:
 test-cover-profile:
 	go test -mod=vendor -coverprofile=/tmp/profile.out ./...
 
-test-cover:
+test-cover-text:
 	go tool cover -func=/tmp/profile.out
+
+test-cover-html:
+	go tool cover -html=/tmp/profile.out
 
 stop-all:
 	docker container stop $$(docker container ls -q --filter name=web_db)
