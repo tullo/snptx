@@ -14,6 +14,12 @@ import (
 
 // TestUser validates the full set of CRUD operations on User values.
 func TestUser(t *testing.T) {
+
+	// skip the test if the -short flag is provided
+	if testing.Short() {
+		t.Skip("database: skipping integration test")
+	}
+
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
@@ -97,6 +103,12 @@ func TestUser(t *testing.T) {
 
 // TestAuthenticate validates the behavior around authenticating users.
 func TestAuthenticate(t *testing.T) {
+
+	// skip the test if the -short flag is provided
+	if testing.Short() {
+		t.Skip("database: skipping integration test")
+	}
+
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
@@ -160,6 +172,12 @@ func TestAuthenticate(t *testing.T) {
 
 // TestChangePassword validates the behavior around changing the password for a user.
 func TestChangePassword(t *testing.T) {
+
+	// skip the test if the -short flag is provided
+	if testing.Short() {
+		t.Skip("database: skipping integration test")
+	}
+
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 

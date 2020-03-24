@@ -12,6 +12,12 @@ import (
 
 // TestSnippet validates the full set of CRUD operations on Snippet values.
 func TestSnippet(t *testing.T) {
+
+	// skip the test if the -short flag is provided
+	if testing.Short() {
+		t.Skip("database: skipping integration test")
+	}
+
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
