@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -60,7 +59,19 @@ func run() error {
 	// =========================================================================
 	// Configuration
 
+	// session secret (should be 32 bytes long) is used to encrypt and authenticate session cookies
+	// e.g. 'openssl rand -base64 32'
+
 	var cfg struct {
+		Web struct {
+			APIHost         string        `conf:"default::4200"`
+			DebugMode       bool          `conf:"default:false"`
+			SessionSecret   string        `conf:"default:un/MjLYrdgFiQxAHDge/lI/kydfyZRo4T0UF+Mn4xag="`
+			IdleTimeout     time.Duration `conf:"default:1m"`
+			ReadTimeout     time.Duration `conf:"default:5s"`
+			WriteTimeout    time.Duration `conf:"default:5s"`
+			ShutdownTimeout time.Duration `conf:"default:5s"`
+		}
 		DB struct {
 			User       string `conf:"default:postgres"`
 			Password   string `conf:"default:postgres,noprint"`
@@ -83,34 +94,33 @@ func run() error {
 		return errors.Wrap(err, "error: parsing config")
 	}
 
-	// This is used for multiple commands below.
-	dbConfig := database.Config{
+	// =========================================================================
+	// Start Database
+
+	log.Println("main : Started : Initializing database support")
+
+	db, err := database.Open(database.Config{
 		User:       cfg.DB.User,
 		Password:   cfg.DB.Password,
 		Host:       cfg.DB.Host,
 		Name:       cfg.DB.Name,
 		DisableTLS: cfg.DB.DisableTLS,
+	})
+	if err != nil {
+		return errors.Wrap(err, "connecting to db")
 	}
+	defer func() {
+		log.Printf("main : Database Stopping : %s", cfg.DB.Host)
+		db.Close()
+	}()
 
-	addr := flag.String("addr", ":4200", "HTTP network address")
-	debug := flag.Bool("debug", false, "Enable debug mode")
-	// force the db driver to convert TIME and DATE fields to time.Time (parseTime=true)
-	//dsn := flag.String("dsn", "web:snptx@tcp(0.0.0.0:3306)/snptx?parseTime=true", "MySQL data source name")
-	// session secret (should be 32 bytes long) is used to encrypt and authenticate session cookies
-	// e.g. 'openssl rand -base64 32'
-	secret := flag.String("secret", "un/MjLYrdgFiQxAHDge/lI/kydfyZRo4T0UF+Mn4xag=", "Secret key")
+	// =========================================================================
+	// Start Web Application
 
-	flag.Parse()
+	log.Println("main : Started : Initializing web application")
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
-
-	//db, err := openDB(*dsn)
-	db, err := database.Open(dbConfig)
-	if err != nil {
-		errorLog.Fatal(err)
-	}
-	defer db.Close()
 
 	// initialize template cache
 	templateCache, err := newTemplateCache("./ui/html/")
@@ -119,7 +129,7 @@ func run() error {
 	}
 
 	// sessions expire after 12 hours
-	session := sessions.New([]byte(*secret))
+	session := sessions.New([]byte(cfg.Web.SessionSecret))
 	session.Lifetime = 12 * time.Hour
 	// set the secure flag on session cookies and
 	// serve all requests over https in production environment
@@ -127,7 +137,7 @@ func run() error {
 	session.SameSite = http.SameSiteStrictMode
 
 	app := &application{
-		debug:         *debug,
+		debug:         cfg.Web.DebugMode,
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		session:       session,
@@ -144,16 +154,16 @@ func run() error {
 	}
 
 	srv := &http.Server{
-		Addr:         *addr,
+		Addr:         cfg.Web.APIHost,
 		ErrorLog:     errorLog,
 		Handler:      app.routes(),
 		TLSConfig:    tlsConfig,
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  cfg.Web.IdleTimeout,
+		ReadTimeout:  cfg.Web.ReadTimeout,
+		WriteTimeout: cfg.Web.WriteTimeout,
 	}
 
-	infoLog.Printf("Starting server on %s", *addr)
+	infoLog.Printf("Starting server on %s", cfg.Web.APIHost)
 	err = srv.ListenAndServeTLS("./tls/localhost/cert.pem", "./tls/localhost/key.pem")
 	errorLog.Fatal(err)
 

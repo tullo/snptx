@@ -8,10 +8,13 @@ export DOCKER_BUILDKIT = 1
 
 all: snptx test-cover-profile test-cover-text
 
+go-run:
+	go run ./cmd/snptx --db-disable-tls=1
+
 go-migrate:
 	go run ./cmd/snptx-admin/main.go --db-disable-tls=1 migrate
 
-go-seed:
+go-seed: go-migrate
 	go run ./cmd/snptx-admin/main.go --db-disable-tls=1 seed
 
 snptx:
