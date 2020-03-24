@@ -20,8 +20,8 @@ COPY ui ui
 COPY vendor vendor
 
 # Build the admin tool so we can have it in the image.
-#WORKDIR /app/cmd/${PACKAGE_PREFIX}sales-admin
-#RUN go build -mod=vendor
+WORKDIR /app/cmd/${PACKAGE_NAME}-admin
+RUN go build
 
 # Build the service binary.
 WORKDIR /app/cmd/${PACKAGE_NAME}
@@ -35,6 +35,7 @@ FROM alpine:3.7
 ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
+COPY --from=build_stage /app/cmd/${PACKAGE_NAME}-admin/${PACKAGE_NAME}-admin /app/admin
 COPY --from=build_stage /app/cmd/${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
 COPY --from=build_stage /app/ui /app/ui
 COPY --from=build_stage /app/tls /app/tls

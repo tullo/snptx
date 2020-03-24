@@ -34,9 +34,9 @@ func run() error {
 		Args conf.Args
 	}
 
-	if err := conf.Parse(os.Args[1:], "WEB", &cfg); err != nil {
+	if err := conf.Parse(os.Args[1:], "SNPTX", &cfg); err != nil {
 		if err == conf.ErrHelpWanted {
-			usage, err := conf.Usage("WEB", &cfg)
+			usage, err := conf.Usage("SNPTX", &cfg)
 			if err != nil {
 				return errors.Wrap(err, "generating usage")
 			}

@@ -8,10 +8,10 @@ export DOCKER_BUILDKIT = 1
 
 all: snptx test-cover-profile test-cover-text
 
-migrate:
+go-migrate:
 	go run ./cmd/snptx-admin/main.go --db-disable-tls=1 migrate
 
-seed:
+go-seed:
 	go run ./cmd/snptx-admin/main.go --db-disable-tls=1 seed
 
 snptx:
@@ -28,6 +28,12 @@ snptx:
 
 up:
 	docker-compose up --remove-orphans
+
+migrate:
+	docker-compose exec snptx /app/admin migrate
+
+seed: migrate
+	docker-compose exec snptx /app/admin seed
 
 down:
 	docker-compose down
