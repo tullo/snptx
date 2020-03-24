@@ -36,6 +36,8 @@ ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
 COPY --from=build_stage /app/cmd/${PACKAGE_NAME}/${PACKAGE_NAME} /app/main
+COPY --from=build_stage /app/ui /app/ui
+COPY --from=build_stage /app/tls /app/tls
 WORKDIR /app
 CMD /app/main
 

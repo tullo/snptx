@@ -14,3 +14,17 @@ services:
       - 5432:5432
     environment:
       - POSTGRES_PASSWORD=postgres
+
+  snptx:
+    container_name: snptx
+    networks:
+      - shared-network
+    image: tullo/snptx-amd64:0.1.0
+    ports:
+      - 4200:4200
+    environment:
+      - SNPTX_DB_USER=postgres
+      - SNPTX_DB_PASSWORD=postgres
+      - SNPTX_DB_NAME=postgres
+      - SNPTX_DB_HOST=db
+      - SNPTX_DB_DISABLE_TLS=1
