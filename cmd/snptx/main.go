@@ -3,13 +3,16 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/ardanlabs/conf"
 	"github.com/golangcollege/sessions"
+	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/platform/database"
 	"github.com/tullo/snptx/internal/snippet"
 	"github.com/tullo/snptx/internal/user"
@@ -46,6 +49,49 @@ type application struct {
 }
 
 func main() {
+	if err := run(); err != nil {
+		log.Printf("error: %s", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+
+	// =========================================================================
+	// Configuration
+
+	var cfg struct {
+		DB struct {
+			User       string `conf:"default:postgres"`
+			Password   string `conf:"default:postgres,noprint"`
+			Host       string `conf:"default:0.0.0.0"`
+			Name       string `conf:"default:postgres"`
+			DisableTLS bool   `conf:"default:false"`
+		}
+		Args conf.Args
+	}
+
+	if err := conf.Parse(os.Args[1:], "SNPTX", &cfg); err != nil {
+		if err == conf.ErrHelpWanted {
+			usage, err := conf.Usage("SNPTX", &cfg)
+			if err != nil {
+				return errors.Wrap(err, "generating usage")
+			}
+			fmt.Println(usage)
+			return nil
+		}
+		return errors.Wrap(err, "error: parsing config")
+	}
+
+	// This is used for multiple commands below.
+	dbConfig := database.Config{
+		User:       cfg.DB.User,
+		Password:   cfg.DB.Password,
+		Host:       cfg.DB.Host,
+		Name:       cfg.DB.Name,
+		DisableTLS: cfg.DB.DisableTLS,
+	}
+
 	addr := flag.String("addr", ":4200", "HTTP network address")
 	debug := flag.Bool("debug", false, "Enable debug mode")
 	// force the db driver to convert TIME and DATE fields to time.Time (parseTime=true)
@@ -60,13 +106,7 @@ func main() {
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	//db, err := openDB(*dsn)
-	db, err := database.Open(database.Config{
-		User:       "postgres",
-		Password:   "postgres",
-		Host:       "0.0.0.0",
-		Name:       "",
-		DisableTLS: true,
-	})
+	db, err := database.Open(dbConfig)
 	if err != nil {
 		errorLog.Fatal(err)
 	}
@@ -116,4 +156,6 @@ func main() {
 	infoLog.Printf("Starting server on %s", *addr)
 	err = srv.ListenAndServeTLS("./tls/localhost/cert.pem", "./tls/localhost/key.pem")
 	errorLog.Fatal(err)
+
+	return err
 }
