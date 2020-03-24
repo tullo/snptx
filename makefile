@@ -33,10 +33,10 @@ down:
 	docker-compose down
 
 test:
-	go test -mod=vendor ./... -count=1
+	go test ./... -count=1
 
 test-cover-profile:
-	go test -mod=vendor -coverprofile=/tmp/profile.out ./...
+	go test -coverprofile=/tmp/profile.out ./...
 
 test-cover-text:
 	go tool cover -func=/tmp/profile.out
