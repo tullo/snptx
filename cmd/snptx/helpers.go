@@ -27,6 +27,8 @@ func (app *application) serverError(w http.ResponseWriter, err error) {
 	}
 
 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+	app.SignalShutdown()
 }
 
 func (app *application) clientError(w http.ResponseWriter, status int) {

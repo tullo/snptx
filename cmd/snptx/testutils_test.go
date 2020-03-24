@@ -8,7 +8,10 @@ import (
 	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"os/signal"
 	"regexp"
+	"syscall"
 	"testing"
 	"time"
 
@@ -49,11 +52,16 @@ func newTestApplication(t *testing.T) *application {
 	// mitigate cross site request forgry csrf
 	session.SameSite = http.SameSiteStrictMode
 
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
 	// app struct instantiation using the mocks for the loggers and database models
 	return &application{
 		errorLog:      log.New(ioutil.Discard, "", 0),
 		infoLog:       log.New(ioutil.Discard, "", 0),
+		debug:         false,
 		session:       session,
+		shutdown:      shutdown,
 		snippets:      &mock.SnippetModel{},
 		templateCache: templateCache,
 		users:         &mock.UserModel{},

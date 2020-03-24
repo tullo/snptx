@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ardanlabs/conf"
@@ -33,6 +36,7 @@ type application struct {
 	errorLog *log.Logger
 	infoLog  *log.Logger
 	session  *sessions.Session
+	shutdown chan os.Signal
 	snippets interface {
 		Insert(string, string, string) (string, error)
 		Get(string) (*snippet.Snippet, error)
@@ -45,6 +49,12 @@ type application struct {
 		Get(string) (*user.User, error)
 		ChangePassword(id string, currentPassword, newPassword string) error
 	}
+}
+
+// SignalShutdown is used to gracefully shutdown the app when an integrity
+// issue is identified.
+func (a *application) SignalShutdown() {
+	a.shutdown <- syscall.SIGTERM
 }
 
 func main() {
@@ -97,7 +107,10 @@ func run() error {
 	// =========================================================================
 	// Start Database
 
-	log.Println("main : Started : Initializing database support")
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	infoLog.Println("main : Started : Initializing database support")
 
 	db, err := database.Open(database.Config{
 		User:       cfg.DB.User,
@@ -110,17 +123,14 @@ func run() error {
 		return errors.Wrap(err, "connecting to db")
 	}
 	defer func() {
-		log.Printf("main : Database Stopping : %s", cfg.DB.Host)
+		infoLog.Printf("main : Database Stopping : %s", cfg.DB.Host)
 		db.Close()
 	}()
 
 	// =========================================================================
 	// Start Web Application
 
-	log.Println("main : Started : Initializing web application")
-
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	infoLog.Println("main : Started : Initializing web application")
 
 	// initialize template cache
 	templateCache, err := newTemplateCache("./ui/html/")
@@ -136,11 +146,17 @@ func run() error {
 	session.Secure = true
 	session.SameSite = http.SameSiteStrictMode
 
+	// make a channel to listen for an interrupt or terminate signal from the OS.
+	// use a buffered channel because the signal package requires it.
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
+
 	app := &application{
 		debug:         cfg.Web.DebugMode,
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		session:       session,
+		shutdown:      shutdown,
 		snippets:      &postgres.SnippetModel{DB: db},
 		templateCache: templateCache,
 		users:         &postgres.UserModel{DB: db},
@@ -163,9 +179,46 @@ func run() error {
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}
 
-	infoLog.Printf("Starting server on %s", cfg.Web.APIHost)
-	err = srv.ListenAndServeTLS("./tls/localhost/cert.pem", "./tls/localhost/key.pem")
-	errorLog.Fatal(err)
+	// Make a channel to listen for errors coming from the listener. Use a
+	// buffered channel so the goroutine can exit if we don't collect this error.
+	serverErrors := make(chan error, 1)
 
-	return err
+	// Start the application listening for requests.
+	go func() {
+		infoLog.Printf("Starting server on %s", cfg.Web.APIHost)
+		serverErrors <- srv.ListenAndServeTLS("./tls/localhost/cert.pem", "./tls/localhost/key.pem")
+	}()
+
+	// =========================================================================
+	// Shutdown
+
+	// Blocking main and waiting for shutdown.
+	select {
+	case err := <-serverErrors:
+		return errors.Wrap(err, "server error")
+
+	case sig := <-shutdown:
+		infoLog.Printf("main : %v : Start shutdown", sig)
+
+		// Give outstanding requests a deadline for completion.
+		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
+		defer cancel()
+
+		// Asking listener to shutdown and load shed.
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			infoLog.Printf("main : Graceful shutdown did not complete in %v : %v", cfg.Web.ShutdownTimeout, err)
+			err = srv.Close()
+		}
+
+		// Log the status of this shutdown.
+		switch {
+		case sig == syscall.SIGSTOP:
+			return errors.New("integrity issue caused shutdown")
+		case err != nil:
+			return errors.Wrap(err, "could not stop server gracefully")
+		}
+	}
+
+	return nil
 }
