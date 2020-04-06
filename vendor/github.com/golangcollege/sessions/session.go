@@ -38,9 +38,11 @@
 package sessions
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"time"
 )
@@ -251,6 +253,27 @@ func (bw *bufferedResponseWriter) Write(b []byte) (int, error) {
 
 func (bw *bufferedResponseWriter) WriteHeader(code int) {
 	bw.code = code
+}
+
+func (bw *bufferedResponseWriter) Push(target string, opts *http.PushOptions) error {
+	if pusher, ok := bw.ResponseWriter.(http.Pusher); ok {
+		return pusher.Push(target, opts)
+	}
+	return http.ErrNotSupported
+}
+
+func (bw *bufferedResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hj := bw.ResponseWriter.(http.Hijacker)
+	return hj.Hijack()
+}
+
+func (bw *bufferedResponseWriter) Flush() {
+	f, ok := bw.ResponseWriter.(http.Flusher)
+	if ok == true {
+		bw.ResponseWriter.Write(bw.buf.Bytes())
+		f.Flush()
+		bw.buf.Reset()
+	}
 }
 
 func defaultErrorHandler(w http.ResponseWriter, r *http.Request, err error) {

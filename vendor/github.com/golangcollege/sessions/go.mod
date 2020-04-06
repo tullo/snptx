@@ -1,3 +1,5 @@
 module github.com/golangcollege/sessions
 
-require golang.org/x/crypto v0.0.0-20181009213950-7c1a557ab941
+require golang.org/x/crypto v0.0.0-20200317142112-1b76d66859c6
+
+go 1.13
