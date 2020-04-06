@@ -41,6 +41,7 @@ type application struct {
 		Insert(string, string, string) (string, error)
 		Get(string) (*snippet.Snippet, error)
 		Latest() ([]snippet.Snippet, error)
+		Update(string, snippet.UpdateSnippet) error
 	}
 	templateCache map[string]*template.Template
 	users         interface {

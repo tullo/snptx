@@ -40,3 +40,15 @@ func (m *SnippetModel) Get(id string) (*snippet.Snippet, error) {
 func (m *SnippetModel) Latest() ([]snippet.Snippet, error) {
 	return []snippet.Snippet{*mockSnippet}, nil
 }
+
+// Update ..
+func (m *SnippetModel) Update(id string, up snippet.UpdateSnippet) error {
+	switch id {
+	case "1":
+		return nil
+	case "66":
+		return fmt.Errorf("Internal Server Error")
+	default:
+		return models.ErrNoRecord
+	}
+}

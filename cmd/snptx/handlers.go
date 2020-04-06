@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/tullo/snptx/internal/forms"
+	"github.com/tullo/snptx/internal/snippet"
 	"github.com/tullo/snptx/pkg/models"
 )
 
@@ -43,6 +44,61 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "show.page.tmpl", &templateData{
 		Snippet: s,
 	})
+}
+
+func (app *application) updateSnippetForm(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get(":id")
+	s, err := app.snippets.Get(id)
+	if err != nil {
+		// unwrapping errors
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+
+	data := make(map[string][]string)
+	data["title"] = append(data["title"], s.Title)
+	data["content"] = append(data["content"], s.Content)
+
+	app.render(w, r, "edit.page.tmpl", &templateData{
+		Snippet: &snippet.Snippet{ID: id},
+		Form:    forms.New(data),
+	})
+}
+
+func (app *application) updateSnippet(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get(":id")
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	form := forms.New(r.PostForm)
+	form.Required("title", "content")
+	form.MaxLength("title", 100)
+	if !form.Valid() {
+		app.render(w, r, "edit.page.tmpl", &templateData{
+			Snippet: &snippet.Snippet{ID: id},
+			Form:    form})
+		return
+	}
+	// update snippet record in the database using the form data
+	t := form.Get("title")
+	c := form.Get("content")
+	up := snippet.UpdateSnippet{
+		Title:   &t,
+		Content: &c,
+	}
+	err = app.snippets.Update(id, up)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	app.session.Put(r, "flash", "Snippet successfully updated!")
+	http.Redirect(w, r, fmt.Sprintf("/snippet/%s", id), http.StatusSeeOther)
 }
 
 func (app *application) createSnippetForm(w http.ResponseWriter, r *http.Request) {

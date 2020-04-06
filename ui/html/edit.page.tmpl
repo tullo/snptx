@@ -1,0 +1,27 @@
+{{template "base" .}}
+{{define "title"}}Edit Snippet{{end}}
+{{define "main"}}
+<h2>Edit Snippet</h2>
+<form action='/snippet/{{.Snippet.ID}}/edit' method='POST'>
+    <input type='hidden' name='csrf_token' value='{{.CSRFToken}}'>
+    {{with .Form}}
+        <div>
+            <label>Title:</label>
+            {{with .Errors.Get "title"}}
+                <label class='error'>{{.}}</label>
+            {{end}}
+            <input type='text' name='title' value='{{.Get "title"}}'>
+        </div>
+        <div>
+            <label>Content:</label>
+            {{with .Errors.Get "content"}}
+                <label class='error'>{{.}}</label>
+            {{end}}
+            <textarea name='content'>{{.Get "content"}}</textarea>
+        </div>
+        <div>
+            <input type='submit' value='Update'>
+        </div>
+    {{end}}
+</form>
+{{end}}

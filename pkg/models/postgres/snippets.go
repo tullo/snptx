@@ -61,3 +61,15 @@ func (m *SnippetModel) Latest() ([]snippet.Snippet, error) {
 
 	return snippets, nil
 }
+
+// Update knows how to update a snippet
+func (m *SnippetModel) Update(id string, up snippet.UpdateSnippet) error {
+
+	now := time.Now()
+	err := snippet.Update(context.Background(), m.DB, id, up, now)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
