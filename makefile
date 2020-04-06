@@ -59,6 +59,10 @@ stop-all:
 remove-all:
 	docker container rm $$(docker container ls -aq --filter "name=web_db")
 
+tidy:
+	go mod tidy
+	go mod vendor
+
 deps-reset:
 	git checkout -- go.mod
 	go mod tidy
