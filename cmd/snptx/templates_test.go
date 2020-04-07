@@ -38,3 +38,27 @@ func TestHumanDate(t *testing.T) {
 		})
 	}
 }
+
+func TestShortID(t *testing.T) {
+	tests := []struct {
+		name string
+		id   string
+		want string
+	}{
+		{
+			name: "Valid ID",
+			id:   "72f8b983-3eb4-48db-9ed0-e45cc6bd716b",
+			want: "72f8b983",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := shortID(tt.id)
+
+			if s != tt.want {
+				t.Errorf("want %q; got %q", tt.want, s)
+			}
+		})
+	}
+}
