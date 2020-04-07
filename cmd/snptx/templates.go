@@ -30,8 +30,13 @@ func humanDate(t time.Time) string {
 	return t.UTC().Format("02 Jan 2006 at 15:04")
 }
 
+func shortID(s string) string {
+	return s[:8]
+}
+
 var functions = template.FuncMap{
 	"humanDate": humanDate,
+	"shortID":   shortID,
 }
 
 func newTemplateCache(dir string) (map[string]*template.Template, error) {

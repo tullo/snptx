@@ -15,7 +15,7 @@
         <tr>
             <td><a href='/snippet/{{.ID}}'>{{.Title}}</a></td>
             <td>{{humanDate .DateCreated}}</td>
-            <td>#{{.ID}}</td>
+            <td>{{shortID .ID}}...</td>
         </tr>
         {{end}}
     </table>
