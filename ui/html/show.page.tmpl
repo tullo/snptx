@@ -7,11 +7,7 @@
     <div class='snippet'>
         <div class='metadata'>
             <strong>{{.Snippet.Title}}</strong>
-            {{if .IsAuthenticated}}
             <span><a href="/snippet/{{.Snippet.ID}}/edit">Edit</a></span>
-            {{- else}}
-            <span>#{{.Snippet.ID}}</span>
-            {{- end}}
         </div>
         <pre><code>{{.Snippet.Content}}</code></pre>
         <div class='metadata'>
