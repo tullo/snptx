@@ -42,10 +42,10 @@ down:
 	docker-compose down
 
 test:
-	go test ./... -count=1
+	go test -count=1 -test.timeout=30s ./...
 
 test-cover-profile:
-	go test -coverprofile=/tmp/profile.out ./...
+	go test -test.timeout=30s -coverprofile=/tmp/profile.out ./...
 
 test-cover-text:
 	go tool cover -func=/tmp/profile.out
