@@ -50,6 +50,11 @@ func TestShortID(t *testing.T) {
 			id:   "72f8b983-3eb4-48db-9ed0-e45cc6bd716b",
 			want: "72f8b983",
 		},
+		{
+			name: "Short ID",
+			id:   "123",
+			want: "123",
+		},
 	}
 
 	for _, tt := range tests {

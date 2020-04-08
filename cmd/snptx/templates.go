@@ -31,6 +31,9 @@ func humanDate(t time.Time) string {
 }
 
 func shortID(s string) string {
+	if len(s) < 8 {
+		return s
+	}
 	return s[:8]
 }
 
