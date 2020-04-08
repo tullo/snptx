@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 	"runtime/debug"
 	"time"
@@ -79,6 +80,7 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 	buf := new(bytes.Buffer)
 	err := ts.Execute(buf, app.addDefaultData(data, r))
 	if err != nil {
+		log.Printf("render err=%v+\n", err)
 		app.serverError(w, err)
 		return
 	}
