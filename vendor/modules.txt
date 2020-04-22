@@ -36,7 +36,7 @@ github.com/justinas/alice
 # github.com/justinas/nosurf v1.1.0
 ## explicit
 github.com/justinas/nosurf
-# github.com/lib/pq v1.3.0
+# github.com/lib/pq v1.4.0
 ## explicit
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -51,7 +51,7 @@ go.opencensus.io/internal
 go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20200403201458-baeed622b8d8
+# golang.org/x/crypto v0.0.0-20200420201142-3c4aac89819a
 ## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -59,6 +59,6 @@ golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20/salsa
-# golang.org/x/sys v0.0.0-20200331124033-c3d80250170d
+# golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
 ## explicit
 golang.org/x/sys/cpu
