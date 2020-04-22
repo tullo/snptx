@@ -26,9 +26,8 @@ jobs:
       with:
         go-version: 1.14
 
-    - name: Get deps & build binaries
+    - name: Build binaries using vendored deps
       run: |
-        go mod download
         go build ./cmd/snptx-admin
         go build ./cmd/snptx
 

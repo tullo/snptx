@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Copy the module files first and then download the dependencies.
 COPY go.* ./
-RUN go mod download
+#RUN go mod download
 
 # Copy the source code into the image.
 COPY cmd cmd
