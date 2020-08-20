@@ -78,7 +78,7 @@ deps-cleancache:
 	@go clean -modcache
 
 check:
-	$(shell go env GOPATH)/bin/staticcheck -go 1.15 -tests ./db/... ./note/... ./templates/...
+	$(shell go env GOPATH)/bin/staticcheck -go 1.15 -tests ./...
 
 .PHONY: clone
 clone:
