@@ -15,8 +15,6 @@ import (
 	"github.com/tullo/snptx/pkg/models"
 )
 
-const usersCollection = "users"
-
 var (
 	// ErrNotFound is used when a specific User is requested but does not exist.
 	ErrNotFound = errors.New("User not found")

@@ -110,7 +110,7 @@ func TestSnippet(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould be able to delete snippet.", tests.Success)
 
-			savedS, err = snippet.Retrieve(ctx, db, s.ID)
+			_, err = snippet.Retrieve(ctx, db, s.ID)
 			if errors.Cause(err) != snippet.ErrNotFound {
 				t.Fatalf("\t%s\tShould NOT be able to retrieve snippet : %s.", tests.Failed, err)
 			}

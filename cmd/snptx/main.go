@@ -186,7 +186,7 @@ func run() error {
 
 	// Start the application listening for requests.
 	go func() {
-		infoLog.Printf("Starting server on %s", cfg.Web.APIHost)
+		infoLog.Printf("Starting server on %s (%s)", cfg.Web.APIHost, build[:7])
 		serverErrors <- srv.ListenAndServeTLS("./tls/localhost/cert.pem", "./tls/localhost/key.pem")
 	}()
 

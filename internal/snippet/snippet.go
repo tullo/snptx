@@ -11,8 +11,6 @@ import (
 	"go.opencensus.io/trace"
 )
 
-const snippetsCollection = "snippets"
-
 var (
 	// ErrNotFound is used when a specific Snippet is requested but does not exist.
 	ErrNotFound = errors.New("Snippet not found")

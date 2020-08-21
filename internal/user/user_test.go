@@ -92,7 +92,7 @@ func TestUser(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould be able to delete user.", tests.Success)
 
-			savedU, err = user.Retrieve(ctx, db, u.ID)
+			_, err = user.Retrieve(ctx, db, u.ID)
 			if errors.Cause(err) != user.ErrNotFound {
 				t.Fatalf("\t%s\tShould NOT be able to retrieve user : %s.", tests.Failed, err)
 			}

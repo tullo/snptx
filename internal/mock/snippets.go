@@ -30,7 +30,7 @@ func (m *SnippetModel) Get(id string) (*snippet.Snippet, error) {
 	case "1":
 		return mockSnippet, nil
 	case "66":
-		return nil, fmt.Errorf("Internal Server Error")
+		return nil, fmt.Errorf("internal server error")
 	default:
 		return nil, models.ErrNoRecord
 	}
@@ -47,7 +47,7 @@ func (m *SnippetModel) Update(id string, up snippet.UpdateSnippet) error {
 	case "1":
 		return nil
 	case "66":
-		return fmt.Errorf("Internal Server Error")
+		return fmt.Errorf("internal server error")
 	default:
 		return models.ErrNoRecord
 	}
