@@ -6,7 +6,11 @@ export VERSION = 0.1.0
 export DOCKER_BUILDKIT = 1
 export COMPOSE_DOCKER_CLI_BUILD = 1
 
-all: snptx test-cover-profile test-cover-text
+.DEFAULT_GOAL := run
+
+all: snptx test-cover-profile test-cover-text check
+
+run: up-db go-seed go-run
 
 go-run:
 	@go run ./cmd/snptx --db-disable-tls=1
@@ -31,6 +35,10 @@ snptx:
 
 up:
 	@docker-compose up --remove-orphans
+
+up-db:
+	@docker-compose up --detach --remove-orphans db
+	@sleep 2
 
 migrate:
 	@docker-compose exec snptx /app/admin migrate
