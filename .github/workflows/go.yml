@@ -26,6 +26,13 @@ jobs:
       with:
         go-version: 1.15
 
+    - name: Run go vet & static check 
+      run: |
+        go vet ./...
+        export PATH=$PATH:$(go env GOPATH)/bin
+        GO111MODULE=off go get -u honnef.co/go/tools/cmd/staticcheck
+        staticcheck ./...
+
     - name: Build binaries using vendored deps
       run: |
         go build ./cmd/snptx-admin
