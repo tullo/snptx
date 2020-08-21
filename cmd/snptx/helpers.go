@@ -45,6 +45,7 @@ func (app *application) addDefaultData(td *templateData, r *http.Request) *templ
 		td = &templateData{}
 	}
 	td.CurrentYear = time.Now().Year()
+	td.Version = app.version[:7]
 
 	// add CSRF token to the template data
 	td.CSRFToken = nosurf.Token(r)

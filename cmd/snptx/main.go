@@ -50,6 +50,7 @@ type application struct {
 		Get(string) (*user.User, error)
 		ChangePassword(id string, currentPassword, newPassword string) error
 	}
+	version string
 }
 
 // SignalShutdown is used to gracefully shutdown the app when an integrity
@@ -161,6 +162,7 @@ func run() error {
 		snippets:      &postgres.SnippetModel{DB: db},
 		templateCache: templateCache,
 		users:         &postgres.UserModel{DB: db},
+		version:       build,
 	}
 
 	// use Go’s favored cipher suites (support for forward secrecy)
