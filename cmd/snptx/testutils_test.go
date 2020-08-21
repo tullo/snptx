@@ -65,6 +65,7 @@ func newTestApplication(t *testing.T) *application {
 		snippets:      &mock.SnippetModel{},
 		templateCache: templateCache,
 		users:         &mock.UserModel{},
+		version:       "develop",
 	}
 }
 
