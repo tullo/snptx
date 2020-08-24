@@ -9,7 +9,7 @@ services:
     container_name: web_db
     networks:
       - shared-network
-    image: postgres:12.2-alpine
+    image: postgres:12.4-alpine
     ports:
       - 5432:5432
     environment:

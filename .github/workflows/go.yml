@@ -40,5 +40,6 @@ jobs:
 
     - name: Run tests
       run: |
+        docker pull postgres:12.4-alpine
         go test -failfast -test.timeout=40s ./...
 #       go test -short ./...
