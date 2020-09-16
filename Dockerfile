@@ -1,4 +1,4 @@
-FROM golang:1.14.2-alpine3.11 as build_stage
+FROM golang:1.15.2-alpine3.12 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 ARG PACKAGE_NAME
@@ -31,7 +31,7 @@ RUN go build -ldflags "-X main.build=${VCS_REF}"
 
 
 # Build production image with Go binaries based on Alpine.
-FROM alpine:3.11
+FROM alpine:3.12
 ARG BUILD_DATE
 ARG VCS_REF
 ARG PACKAGE_NAME
