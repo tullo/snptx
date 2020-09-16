@@ -3,6 +3,7 @@ package databasetest
 import (
 	"bytes"
 	"encoding/json"
+	"net"
 	"os/exec"
 	"testing"
 )
@@ -14,11 +15,14 @@ type Container struct {
 }
 
 // StartContainer runs a postgres container to execute commands.
-func StartContainer(t *testing.T) *Container {
-	t.Helper()
+func StartContainer(t *testing.T, image string, port string, args ...string) *Container {
+	t.Helper() // marks this func as a test helper function
 
-	cmd := exec.Command("docker", "run", "-P", "-d",
-		"-e", "POSTGRES_PASSWORD=postgres", "postgres:12.4-alpine")
+	arg := []string{"run", "-P", "-d"}
+	arg = append(arg, args...)
+	arg = append(arg, image)
+
+	cmd := exec.Command("docker", arg...)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
@@ -35,25 +39,16 @@ func StartContainer(t *testing.T) *Container {
 		t.Fatalf("could not inspect container %s: %v", id, err)
 	}
 
-	var doc []struct {
-		NetworkSettings struct {
-			Ports struct {
-				TCP5432 []struct {
-					HostIP   string `json:"HostIp"`
-					HostPort string `json:"HostPort"`
-				} `json:"5432/tcp"`
-			} `json:"Ports"`
-		} `json:"NetworkSettings"`
-	}
+	var doc []map[string]interface{}
 	if err := json.Unmarshal(out.Bytes(), &doc); err != nil {
 		t.Fatalf("could not decode json: %v", err)
 	}
 
-	network := doc[0].NetworkSettings.Ports.TCP5432[0]
+	ip, randPort := extractIPPort(t, doc, port)
 
 	c := Container{
 		ID:   id,
-		Host: network.HostIP + ":" + network.HostPort,
+		Host: net.JoinHostPort(ip, randPort),
 	}
 
 	t.Log("DB Host:", c.Host)
@@ -85,4 +80,33 @@ func DumpContainerLogs(t *testing.T, c *Container) {
 		t.Fatalf("could not log container: %v", err)
 	}
 	t.Logf("Logs for %s\n%s:", c.ID, out)
+}
+
+// extracts network settings based on the specified port.
+func extractIPPort(t *testing.T, doc []map[string]interface{}, port string) (string, string) {
+	nw, exists := doc[0]["NetworkSettings"]
+	if !exists {
+		t.Fatal("could not get network settings")
+	}
+	ports, exists := nw.(map[string]interface{})["Ports"]
+	if !exists {
+		t.Fatal("could not get network ports settings")
+	}
+	tcp, exists := ports.(map[string]interface{})[port+"/tcp"]
+	if !exists {
+		t.Fatal("could not get network ports/tcp settings")
+	}
+	list, exists := tcp.([]interface{})
+	if !exists {
+		t.Fatal("could not get network ports/tcp list settings")
+	}
+	if len(list) != 1 {
+		t.Fatal("could not get network ports/tcp list settings")
+	}
+	data, exists := list[0].(map[string]interface{})
+	if !exists {
+		t.Fatal("could not get network ports/tcp list data")
+	}
+
+	return data["HostIp"].(string), data["HostPort"].(string)
 }

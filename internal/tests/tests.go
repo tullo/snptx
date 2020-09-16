@@ -23,6 +23,15 @@ const (
 	Failed  = "\u2717"
 )
 
+var (
+	dbImage = "postgres:12.4-alpine"
+	dbPort  = "5432"
+	dbArgs  = []string{
+		"-e", "POSTGRES_USER=postgres",
+		"-e", "POSTGRES_PASSWORD=postgres",
+	}
+)
+
 // NewUnit creates a test database inside a Docker container. It creates the
 // required table structure but the database is otherwise empty.
 //
@@ -34,7 +43,7 @@ const (
 func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 	t.Helper()
 
-	c := databasetest.StartContainer(t)
+	c := databasetest.StartContainer(t, dbImage, dbPort, dbArgs...)
 
 	db, err := database.Open(database.Config{
 		User:       "postgres",
