@@ -16,14 +16,14 @@ github.com/golang/groupcache/lru
 # github.com/golangcollege/sessions v1.2.0
 ## explicit
 github.com/golangcollege/sessions
-# github.com/google/go-cmp v0.5.1
+# github.com/google/go-cmp v0.5.2
 ## explicit
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/uuid v1.1.1
+# github.com/google/uuid v1.1.2
 ## explicit
 github.com/google/uuid
 # github.com/jmoiron/sqlx v1.2.0
@@ -33,7 +33,7 @@ github.com/jmoiron/sqlx/reflectx
 # github.com/justinas/alice v1.2.0
 ## explicit
 github.com/justinas/alice
-# github.com/justinas/nosurf v1.1.0
+# github.com/justinas/nosurf v1.1.1
 ## explicit
 github.com/justinas/nosurf
 # github.com/lib/pq v1.8.0
@@ -51,7 +51,7 @@ go.opencensus.io/internal
 go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
+# golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 ## explicit
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -59,6 +59,6 @@ golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20/salsa
-# golang.org/x/sys v0.0.0-20200819171115-d785dc25833f
+# golang.org/x/sys v0.0.0-20200916084744-dbad9cb7cb7a
 ## explicit
 golang.org/x/sys/cpu
