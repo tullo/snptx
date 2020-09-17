@@ -3,17 +3,19 @@
 {{define "title"}}Snippet {{shortID .Snippet.ID}}{{end}}
 
 {{define "main"}}
-    <h2>Snippet: {{.Snippet.Title}}</h2>
+    {{with .Snippet}}
+    <h2>Snippet: {{.Title}}</h2>
     <div class='snippet'>
         <div class='metadata'>
-            <strong>{{.Snippet.Title}}</strong>
-            <span><a href="/snippet/{{.Snippet.ID}}/edit">Edit</a></span>
+            <strong>{{.Title}}</strong>
+            <span><a href="/snippet/{{.ID}}/edit">Edit</a></span>
         </div>
-        <pre><code>{{.Snippet.Content}}</code></pre>
+        <pre><code>{{.Content}}</code></pre>
         <div class='metadata'>
             {{- /* custom template fn humanDate */ -}}
-            <time>Created: {{humanDate .Snippet.DateCreated}}</time>
-            <time>Expires: {{humanDate .Snippet.DateExpires}}</time>
+            <time>Created: {{humanDate .DateCreated}}</time>
+            <time>Expires: {{humanDate .DateExpires}}</time>
         </div>
     </div>
+    {{end}}
 {{- end}}
