@@ -13,7 +13,7 @@ type User struct {
 	Email        string         `db:"email" json:"email"`
 	Active       bool           `db:"active" json:"active"`
 	Roles        pq.StringArray `db:"roles" json:"roles"`
-	PasswordHash []byte         `db:"password_hash" json:"-"`
+	PasswordHash string         `db:"password_hash" json:"-"`
 	DateCreated  time.Time      `db:"date_created" json:"date_created"`
 	DateUpdated  time.Time      `db:"date_updated" json:"date_updated"`
 }

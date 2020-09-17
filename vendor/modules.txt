@@ -1,3 +1,6 @@
+# github.com/alexedwards/argon2id v0.0.0-20200802152012-2464efd3196b
+## explicit
+github.com/alexedwards/argon2id
 # github.com/ardanlabs/conf v1.3.2
 ## explicit
 github.com/ardanlabs/conf
@@ -53,8 +56,8 @@ go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
 # golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 ## explicit
-golang.org/x/crypto/bcrypt
-golang.org/x/crypto/blowfish
+golang.org/x/crypto/argon2
+golang.org/x/crypto/blake2b
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/poly1305

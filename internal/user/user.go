@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"go.opencensus.io/trace"
-	"golang.org/x/crypto/bcrypt"
 
+	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -51,7 +51,7 @@ func Create(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, 
 	ctx, span := trace.StartSpan(ctx, "internal.user.Create")
 	defer span.End()
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(n.Password), bcrypt.DefaultCost)
+	hash, err := argon2id.CreateHash(n.Password, argon2id.DefaultParams)
 	if err != nil {
 		return nil, errors.Wrap(err, "generating password hash")
 	}
@@ -125,11 +125,11 @@ func Update(ctx context.Context, db *sqlx.DB, id string, upd UpdateUser, now tim
 		u.Roles = upd.Roles
 	}
 	if upd.Password != nil {
-		pw, err := bcrypt.GenerateFromPassword([]byte(*upd.Password), bcrypt.DefaultCost)
+		hash, err := argon2id.CreateHash(*upd.Password, argon2id.DefaultParams)
 		if err != nil {
 			return errors.Wrap(err, "generating password hash")
 		}
-		u.PasswordHash = pw
+		u.PasswordHash = hash
 	}
 
 	u.DateUpdated = now
@@ -193,7 +193,7 @@ func Authenticate(ctx context.Context, db *sqlx.DB, now time.Time, email, passwo
 
 	// Compare the provided password with the saved hash. Use the bcrypt
 	// comparison function so it is cryptographically secure.
-	if err := bcrypt.CompareHashAndPassword(u.PasswordHash, []byte(password)); err != nil {
+	if match, err := argon2id.ComparePasswordAndHash(password, u.PasswordHash); err != nil || !match {
 		return auth.Claims{}, ErrAuthenticationFailure
 	}
 
@@ -206,28 +206,27 @@ func Authenticate(ctx context.Context, db *sqlx.DB, now time.Time, email, passwo
 // ChangePassword ...
 func ChangePassword(ctx context.Context, db *sqlx.DB, id string, currentPassword, newPassword string) error {
 
-	user, err := Retrieve(ctx, db, id)
+	u, err := Retrieve(ctx, db, id)
 	if err != nil {
 		return err
 	}
 
 	// compare the provided password with the saved hash
-	err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(currentPassword))
-	if err != nil {
-		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+	if match, err := argon2id.ComparePasswordAndHash(currentPassword, u.PasswordHash); err != nil || !match {
+		if !match {
 			return models.ErrInvalidCredentials
 		}
 		return err
 	}
 
 	// generate hash based on the new password
-	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), 12)
+	hash, err := argon2id.CreateHash(newPassword, argon2id.DefaultParams)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "generating password hash")
 	}
 
 	// persist the new hash
 	stmt := "UPDATE users SET password_hash = $1 WHERE user_id = $2"
-	_, err = db.Exec(stmt, string(newPasswordHash), id)
+	_, err = db.Exec(stmt, hash, id)
 	return err
 }
