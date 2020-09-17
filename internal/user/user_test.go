@@ -43,6 +43,7 @@ func TestUser(t *testing.T) {
 				t.Fatalf("\t%s\tShould be able to create user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to create user.", tests.Success)
+			userID := u.ID
 
 			savedU, err := user.Retrieve(ctx, db, u.ID)
 			if err != nil {
@@ -56,8 +57,8 @@ func TestUser(t *testing.T) {
 			t.Logf("\t%s\tShould get back the same user.", tests.Success)
 
 			upd := user.UpdateUser{
-				Name:  tests.StringPointer("Andreas Amstutz"),
-				Email: tests.StringPointer("me@amstutz-it.dk"),
+				Name:  tests.StringPointer("Andreas Amstutz - Updated"),
+				Email: tests.StringPointer("info@amstutz-it.dk"),
 			}
 
 			if err := user.Update(ctx, db, u.ID, upd, now); err != nil {
@@ -87,12 +88,22 @@ func TestUser(t *testing.T) {
 				t.Logf("\t%s\tShould be able to see updates to Email.", tests.Success)
 			}
 
-			if err := user.Delete(ctx, db, u.ID); err != nil {
+			nu = user.NewUser{
+				Email: savedU.Email,
+			}
+
+			_, err = user.Create(ctx, db, nu, now)
+			if errors.Cause(err) != models.ErrDuplicateEmail {
+				t.Fatalf("\t%s\tShould NOT be able create user : %s.", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould NOT be able to create user.", tests.Success)
+
+			if err := user.Delete(ctx, db, userID); err != nil {
 				t.Fatalf("\t%s\tShould be able to delete user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to delete user.", tests.Success)
 
-			_, err = user.Retrieve(ctx, db, u.ID)
+			_, err = user.Retrieve(ctx, db, userID)
 			if errors.Cause(err) != user.ErrNotFound {
 				t.Fatalf("\t%s\tShould NOT be able to retrieve user : %s.", tests.Failed, err)
 			}

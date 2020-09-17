@@ -10,6 +10,7 @@ import (
 	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/pkg/models"
@@ -70,14 +71,14 @@ func Create(ctx context.Context, db *sqlx.DB, n NewUser, now time.Time) (*User, 
 	const q = `INSERT INTO users
 		(user_id, name, email, active, password_hash, roles, date_created, date_updated)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	_, err = db.ExecContext(
-		ctx, q,
-		u.ID, u.Name, u.Email, u.Active,
-		u.PasswordHash, u.Roles,
-		u.DateCreated, u.DateUpdated,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "inserting user")
+	if _, err = db.ExecContext(ctx, q, u.ID, u.Name, u.Email, u.Active,
+		u.PasswordHash, u.Roles, u.DateCreated, u.DateUpdated); err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code.Name() == "unique_violation" {
+				return nil, models.ErrDuplicateEmail
+			}
+		}
+		return nil, err
 	}
 
 	return &u, nil
