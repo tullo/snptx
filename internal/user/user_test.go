@@ -9,7 +9,6 @@ import (
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/tests"
 	"github.com/tullo/snptx/internal/user"
-	"github.com/tullo/snptx/pkg/models"
 )
 
 // TestUser validates the full set of CRUD operations on User values.
@@ -22,6 +21,8 @@ func TestUser(t *testing.T) {
 
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
+
+	u := user.New(db)
 
 	t.Log("Given the need to work with User records.")
 	{
@@ -38,20 +39,20 @@ func TestUser(t *testing.T) {
 				PasswordConfirm: "gopher",
 			}
 
-			u, err := user.Create(ctx, db, nu, now)
+			usr, err := u.Create(ctx, nu, now)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to create user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to create user.", tests.Success)
-			userID := u.ID
+			userID := usr.ID
 
-			savedU, err := user.Retrieve(ctx, db, u.ID)
+			savedU, err := u.Retrieve(ctx, usr.ID)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to retrieve user by ID: %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to retrieve user by ID.", tests.Success)
 
-			if diff := cmp.Diff(u, savedU); diff != "" {
+			if diff := cmp.Diff(usr, savedU); diff != "" {
 				t.Fatalf("\t%s\tShould get back the same user. Diff:\n%s", tests.Failed, diff)
 			}
 			t.Logf("\t%s\tShould get back the same user.", tests.Success)
@@ -61,12 +62,12 @@ func TestUser(t *testing.T) {
 				Email: tests.StringPointer("info@amstutz-it.dk"),
 			}
 
-			if err := user.Update(ctx, db, u.ID, upd, now); err != nil {
+			if err := u.Update(ctx, usr.ID, upd, now); err != nil {
 				t.Fatalf("\t%s\tShould be able to update user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to update user.", tests.Success)
 
-			savedU, err = user.Retrieve(ctx, db, u.ID)
+			savedU, err = u.Retrieve(ctx, usr.ID)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to retrieve user : %s.", tests.Failed, err)
 			}
@@ -92,18 +93,18 @@ func TestUser(t *testing.T) {
 				Email: savedU.Email,
 			}
 
-			_, err = user.Create(ctx, db, nu, now)
-			if errors.Cause(err) != models.ErrDuplicateEmail {
+			_, err = u.Create(ctx, nu, now)
+			if errors.Cause(err) != user.ErrDuplicateEmail {
 				t.Fatalf("\t%s\tShould NOT be able create user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould NOT be able to create user.", tests.Success)
 
-			if err := user.Delete(ctx, db, userID); err != nil {
+			if err := u.Delete(ctx, userID); err != nil {
 				t.Fatalf("\t%s\tShould be able to delete user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to delete user.", tests.Success)
 
-			_, err = user.Retrieve(ctx, db, userID)
+			_, err = u.Retrieve(ctx, userID)
 			if errors.Cause(err) != user.ErrNotFound {
 				t.Fatalf("\t%s\tShould NOT be able to retrieve user : %s.", tests.Failed, err)
 			}
@@ -123,6 +124,8 @@ func TestAuthenticate(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
+	u := user.New(db)
+
 	t.Log("Given the need to authenticate users")
 	{
 		t.Log("\tWhen handling a single User.")
@@ -130,7 +133,7 @@ func TestAuthenticate(t *testing.T) {
 			ctx := tests.Context()
 
 			now := time.Date(2020, time.March, 21, 0, 0, 0, 0, time.UTC)
-			claims, err := user.Authenticate(ctx, db, now, "me@amstutz-it.dk", "goroutines")
+			claims, err := u.Authenticate(ctx, now, "me@amstutz-it.dk", "goroutines")
 			if err != nil {
 				if !errors.Is(err, user.ErrAuthenticationFailure) {
 					t.Fatalf("\t%s\tNon-existing user should NOT be able to authenticate  : %s.", tests.Failed, err)
@@ -146,21 +149,21 @@ func TestAuthenticate(t *testing.T) {
 				PasswordConfirm: "goroutines",
 			}
 
-			u, err := user.Create(ctx, db, nu, now)
+			usr, err := u.Create(ctx, nu, now)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to create user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to create user.", tests.Success)
 
-			claims, err = user.Authenticate(ctx, db, now, "me@amstutz-it.dk", "goroutines")
+			claims, err = u.Authenticate(ctx, now, "me@amstutz-it.dk", "goroutines")
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to generate claims : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to generate claims.", tests.Success)
 
 			want := auth.Claims{}
-			want.Subject = u.ID
-			want.Roles = u.Roles
+			want.Subject = usr.ID
+			want.Roles = usr.Roles
 			want.ExpiresAt = now.Add(time.Hour).Unix()
 			want.IssuedAt = now.Unix()
 
@@ -169,7 +172,7 @@ func TestAuthenticate(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould get back the expected claims.", tests.Success)
 
-			claims, err = user.Authenticate(ctx, db, now, "me@amstutz-it.dk", "wrong-password")
+			claims, err = u.Authenticate(ctx, now, "me@amstutz-it.dk", "wrong-password")
 			if err != nil {
 				if !errors.Is(err, user.ErrAuthenticationFailure) {
 					t.Fatalf("\t%s\tShould NOT be able to generate claims : %s.", tests.Failed, err)
@@ -192,6 +195,8 @@ func TestChangePassword(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
+	u := user.New(db)
+
 	t.Log("Given the need to change passwords")
 	{
 		t.Log("\tWhen handling a single User.")
@@ -206,21 +211,21 @@ func TestChangePassword(t *testing.T) {
 				Password:        "goroutines",
 				PasswordConfirm: "goroutines",
 			}
-			u, err := user.Create(ctx, db, nu, now)
+			usr, err := u.Create(ctx, nu, now)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to create user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to create user.", tests.Success)
 
-			err = user.ChangePassword(ctx, db, u.ID, nu.Password, "validPa$$word")
+			err = u.ChangePassword(ctx, usr.ID, nu.Password, "validPa$$word")
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to change password : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to change password.", tests.Success)
 
-			err = user.ChangePassword(ctx, db, u.ID, "invalid existing password", "")
+			err = u.ChangePassword(ctx, usr.ID, "invalid existing password", "")
 			if err != nil {
-				if !errors.Is(err, models.ErrInvalidCredentials) {
+				if !errors.Is(err, user.ErrInvalidCredentials) {
 					t.Fatalf("\t%s\tShould NOT be able to change password : %s.", tests.Failed, err)
 				}
 			}

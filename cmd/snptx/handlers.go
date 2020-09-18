@@ -4,14 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/tullo/snptx/internal/forms"
 	"github.com/tullo/snptx/internal/snippet"
-	"github.com/tullo/snptx/pkg/models"
+	"github.com/tullo/snptx/internal/user"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	s, err := app.snippets.Latest()
+	s, err := app.snippets.Latest(r.Context())
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -30,10 +31,10 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 	// pat does not strip the colon from the named capture key,
 	// get the value of ":id" from the query string instead of "id"
 	id := r.URL.Query().Get(":id")
-	s, err := app.snippets.Get(id)
+	s, err := app.snippets.Retrieve(r.Context(), id)
 	if err != nil {
 		// unwrapping errors
-		if errors.Is(err, models.ErrNoRecord) {
+		if errors.Is(err, snippet.ErrNotFound) {
 			app.notFound(w)
 		} else {
 			app.serverError(w, err)
@@ -48,10 +49,10 @@ func (app *application) showSnippet(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) updateSnippetForm(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get(":id")
-	s, err := app.snippets.Get(id)
+	s, err := app.snippets.Retrieve(r.Context(), id)
 	if err != nil {
 		// unwrapping errors
-		if errors.Is(err, models.ErrNoRecord) {
+		if errors.Is(err, snippet.ErrNotFound) {
 			app.notFound(w)
 		} else {
 			app.serverError(w, err)
@@ -64,7 +65,7 @@ func (app *application) updateSnippetForm(w http.ResponseWriter, r *http.Request
 	data["content"] = append(data["content"], s.Content)
 
 	app.render(w, r, "edit.page.tmpl", &templateData{
-		Snippet: &snippet.Snippet{ID: id},
+		Snippet: &snippet.Info{ID: id},
 		Form:    forms.New(data),
 	})
 }
@@ -81,7 +82,7 @@ func (app *application) updateSnippet(w http.ResponseWriter, r *http.Request) {
 	form.MaxLength("title", 100)
 	if !form.Valid() {
 		app.render(w, r, "edit.page.tmpl", &templateData{
-			Snippet: &snippet.Snippet{ID: id},
+			Snippet: &snippet.Info{ID: id},
 			Form:    form})
 		return
 	}
@@ -92,7 +93,8 @@ func (app *application) updateSnippet(w http.ResponseWriter, r *http.Request) {
 		Title:   &t,
 		Content: &c,
 	}
-	err = app.snippets.Update(id, up)
+
+	err = app.snippets.Update(r.Context(), id, up, time.Now())
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -130,8 +132,25 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 		app.render(w, r, "create.page.tmpl", &templateData{Form: form})
 		return
 	}
+
+	now := time.Now()
+	var exp time.Time
+	switch form.Get("expires") {
+	case "365":
+		exp = now.AddDate(1, 0, 0)
+	case "7":
+		exp = now.AddDate(0, 0, 7)
+	case "1":
+		exp = now.AddDate(0, 0, 7)
+	}
+	ns := snippet.NewSnippet{
+		Title:       form.Get("title"),
+		Content:     form.Get("content"),
+		DateExpires: exp,
+	}
+
 	// create a new snippet record in the database using the form data
-	id, err := app.snippets.Insert(form.Get("title"), form.Get("content"), form.Get("expires"))
+	spt, err := app.snippets.Create(r.Context(), ns, now)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -141,7 +160,7 @@ func (app *application) createSnippet(w http.ResponseWriter, r *http.Request) {
 	app.session.Put(r, "flash", "Snippet successfully created!")
 
 	// redirect the user to the relevant page for the snippet.
-	http.Redirect(w, r, fmt.Sprintf("/snippet/%s", id), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/%s", spt.ID), http.StatusSeeOther)
 }
 
 func (app *application) signupUserForm(w http.ResponseWriter, r *http.Request) {
@@ -169,9 +188,14 @@ func (app *application) signupUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.users.Insert(form.Get("name"), form.Get("email"), form.Get("password"))
+	nu := user.NewUser{
+		Email:    form.Get("email"),
+		Name:     form.Get("name"),
+		Password: form.Get("password"),
+	}
+	_, err = app.users.Create(r.Context(), nu, time.Now())
 	if err != nil {
-		if errors.Is(err, models.ErrDuplicateEmail) {
+		if errors.Is(err, user.ErrDuplicateEmail) {
 			form.Errors.Add("email", "Address is already in use")
 			app.render(w, r, "signup.page.tmpl", &templateData{Form: form})
 		} else {
@@ -203,19 +227,19 @@ func (app *application) loginUser(w http.ResponseWriter, r *http.Request) {
 	// Check whether the credentials are valid. If they're not, add a generic error
 	// message to the form failures map and re-display the login page.
 	form := forms.New(r.PostForm)
-	id, err := app.users.Authenticate(form.Get("email"), form.Get("password"))
+	claims, err := app.users.Authenticate(r.Context(), time.Now(), form.Get("email"), form.Get("password"))
 	if err != nil {
-		if errors.Is(err, models.ErrInvalidCredentials) {
+		if errors.Is(err, user.ErrAuthenticationFailure) {
 			form.Errors.Add("generic", "Email or Password is incorrect")
 			app.render(w, r, "login.page.tmpl", &templateData{Form: form})
-		} else {
-			app.serverError(w, err)
+			return
 		}
+		app.serverError(w, err)
 		return
 	}
 
 	// Add the ID of the current user to the session data (user loged in)
-	app.session.Put(r, "authenticatedUserID", id)
+	app.session.Put(r, "authenticatedUserID", claims.Subject)
 
 	// pop the captured path from the session data
 	path := app.session.PopString(r, "redirectPathAfterLogin")
@@ -241,14 +265,14 @@ func (app *application) userProfile(w http.ResponseWriter, r *http.Request) {
 	userID := app.session.GetString(r, "authenticatedUserID")
 
 	// retreive user details from the database
-	user, err := app.users.Get(userID)
+	usr, err := app.users.Retrieve(r.Context(), userID)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 	//fmt.Fprintf(w, "%+v", user)
 	app.render(w, r, "profile.page.tmpl", &templateData{
-		User: user,
+		User: usr,
 	})
 
 }
@@ -286,9 +310,9 @@ func (app *application) changePassword(w http.ResponseWriter, r *http.Request) {
 	userID := app.session.GetString(r, "authenticatedUserID")
 
 	// persist the password to the database
-	err = app.users.ChangePassword(userID, form.Get("currentPassword"), form.Get("newPassword"))
+	err = app.users.ChangePassword(r.Context(), userID, form.Get("currentPassword"), form.Get("newPassword"))
 	if err != nil {
-		if errors.Is(err, models.ErrInvalidCredentials) {
+		if errors.Is(err, user.ErrInvalidCredentials) {
 			form.Errors.Add("currentPassword", "Current password is incorrect")
 			app.render(w, r, "password.page.tmpl", &templateData{Form: form})
 		} else if err != nil {

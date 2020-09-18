@@ -19,12 +19,23 @@ var (
 	ErrInvalidID = errors.New("ID is not in its proper form")
 )
 
+// Snippet manages the set of API's for snippet access. It wraps a sql.DB
+// connection pool.
+type Snippet struct {
+	db *sqlx.DB
+}
+
+// New constructs a Snippet for api access.
+func New(db *sqlx.DB) Snippet {
+	return Snippet{db: db}
+}
+
 // Create inserts a new snippet record into the database.
-func Create(ctx context.Context, db *sqlx.DB, n NewSnippet, now time.Time) (*Snippet, error) {
+func (s Snippet) Create(ctx context.Context, n NewSnippet, now time.Time) (*Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Create")
 	defer span.End()
 
-	s := Snippet{
+	spt := Info{
 		ID:          uuid.New().String(),
 		Title:       n.Title,
 		Content:     n.Content,
@@ -36,18 +47,18 @@ func Create(ctx context.Context, db *sqlx.DB, n NewSnippet, now time.Time) (*Sni
 	const q = `INSERT INTO snippets
 	(snippet_id, title, content, date_expires, date_created, date_updated)
 		VALUES ($1, $2, $3, $4, $5, $6)`
-	_, err := db.ExecContext(ctx, q,
-		s.ID, s.Title, s.Content, s.DateExpires, s.DateCreated, s.DateUpdated,
+	_, err := s.db.ExecContext(ctx, q,
+		spt.ID, spt.Title, spt.Content, spt.DateExpires, spt.DateCreated, spt.DateUpdated,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "inserting snippet")
 	}
 
-	return &s, nil
+	return &spt, nil
 }
 
 // Retrieve gets the specified snippet from the database.
-func Retrieve(ctx context.Context, db *sqlx.DB, id string) (*Snippet, error) {
+func (s Snippet) Retrieve(ctx context.Context, id string) (*Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Retrieve")
 	defer span.End()
 
@@ -55,9 +66,9 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id string) (*Snippet, error) {
 		return nil, ErrInvalidID
 	}
 
-	var s Snippet
+	var spt Info
 	const q = `SELECT * FROM snippets WHERE snippet_id = $1`
-	if err := db.GetContext(ctx, &s, q, id); err != nil {
+	if err := s.db.GetContext(ctx, &spt, q, id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, ErrNotFound
 		}
@@ -65,30 +76,30 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id string) (*Snippet, error) {
 		return nil, errors.Wrapf(err, "selecting snippet %q", id)
 	}
 
-	return &s, nil
+	return &spt, nil
 }
 
 // Update updates a snippet record in the database.
-func Update(ctx context.Context, db *sqlx.DB, id string, upd UpdateSnippet, now time.Time) error {
+func (s Snippet) Update(ctx context.Context, id string, upd UpdateSnippet, now time.Time) error {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Update")
 	defer span.End()
 
-	s, err := Retrieve(ctx, db, id)
+	spt, err := s.Retrieve(ctx, id)
 	if err != nil {
 		return err
 	}
 
 	if upd.Title != nil {
-		s.Title = *upd.Title
+		spt.Title = *upd.Title
 	}
 	if upd.Content != nil {
-		s.Content = *upd.Content
+		spt.Content = *upd.Content
 	}
 	if upd.DateExpires != nil {
-		s.DateExpires = *upd.DateExpires
+		spt.DateExpires = *upd.DateExpires
 	}
 
-	s.DateUpdated = now
+	spt.DateUpdated = now
 
 	const q = `UPDATE snippets SET
 		"title" = $2,
@@ -96,7 +107,7 @@ func Update(ctx context.Context, db *sqlx.DB, id string, upd UpdateSnippet, now 
 		"date_expires" = $4,
 		"date_updated" = $5
 		WHERE snippet_id = $1`
-	_, err = db.ExecContext(ctx, q, id, s.Title, s.Content, s.DateExpires, now)
+	_, err = s.db.ExecContext(ctx, q, id, spt.Title, spt.Content, spt.DateExpires, now)
 	if err != nil {
 		return errors.Wrap(err, "updating snippet")
 	}
@@ -105,7 +116,7 @@ func Update(ctx context.Context, db *sqlx.DB, id string, upd UpdateSnippet, now 
 }
 
 // Delete removes a snippet record from the database.
-func Delete(ctx context.Context, db *sqlx.DB, id string) error {
+func (s Snippet) Delete(ctx context.Context, id string) error {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Delete")
 	defer span.End()
 
@@ -115,7 +126,7 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 
 	const q = `DELETE FROM snippets WHERE snippet_id = $1`
 
-	if _, err := db.ExecContext(ctx, q, id); err != nil {
+	if _, err := s.db.ExecContext(ctx, q, id); err != nil {
 		return errors.Wrapf(err, "deleting snippet %s", id)
 	}
 
@@ -123,14 +134,14 @@ func Delete(ctx context.Context, db *sqlx.DB, id string) error {
 }
 
 // Latest gets the latest snippets from the database.
-func Latest(ctx context.Context, db *sqlx.DB) ([]Snippet, error) {
+func (s Snippet) Latest(ctx context.Context) ([]Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Latest")
 	defer span.End()
 
-	snippets := []Snippet{}
+	snippets := []Info{}
 	const q = `SELECT * FROM snippets
 		WHERE date_expires > NOW() ORDER BY date_created DESC LIMIT 10;`
-	if err := db.SelectContext(ctx, &snippets, q); err != nil {
+	if err := s.db.SelectContext(ctx, &snippets, q); err != nil {
 		return nil, errors.Wrap(err, "selecting snippets")
 	}
 

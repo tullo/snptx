@@ -15,11 +15,10 @@ import (
 	"github.com/ardanlabs/conf"
 	"github.com/golangcollege/sessions"
 	"github.com/pkg/errors"
+	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/platform/database"
 	"github.com/tullo/snptx/internal/snippet"
 	"github.com/tullo/snptx/internal/user"
-
-	"github.com/tullo/snptx/pkg/models/postgres"
 )
 
 // build is the git version of this application. It is set using build flags in the makefile.
@@ -38,17 +37,18 @@ type application struct {
 	session  *sessions.Session
 	shutdown chan os.Signal
 	snippets interface {
-		Insert(string, string, string) (string, error)
-		Get(string) (*snippet.Snippet, error)
-		Latest() ([]snippet.Snippet, error)
-		Update(string, snippet.UpdateSnippet) error
+		Create(context.Context, snippet.NewSnippet, time.Time) (*snippet.Info, error)
+		Delete(context.Context, string) error
+		Latest(context.Context) ([]snippet.Info, error)
+		Update(context.Context, string, snippet.UpdateSnippet, time.Time) error
+		Retrieve(context.Context, string) (*snippet.Info, error)
 	}
 	templateCache map[string]*template.Template
 	users         interface {
-		Insert(string, string, string) error
-		Authenticate(string, string) (string, error)
-		Get(string) (*user.User, error)
-		ChangePassword(id string, currentPassword, newPassword string) error
+		Authenticate(context.Context, time.Time, string, string) (auth.Claims, error)
+		Create(context.Context, user.NewUser, time.Time) (*user.Info, error)
+		ChangePassword(context.Context, string, string, string) error
+		Retrieve(context.Context, string) (*user.Info, error)
 	}
 	version string
 }
@@ -153,15 +153,18 @@ func run() error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
+	snippets := snippet.New(db)
+	users := user.New(db)
+
 	app := &application{
 		debug:         cfg.Web.DebugMode,
 		errorLog:      errorLog,
 		infoLog:       infoLog,
 		session:       session,
 		shutdown:      shutdown,
-		snippets:      &postgres.SnippetModel{DB: db},
+		snippets:      snippets,
 		templateCache: templateCache,
-		users:         &postgres.UserModel{DB: db},
+		users:         users,
 		version:       build,
 	}
 

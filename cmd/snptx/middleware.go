@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/tullo/snptx/internal/user"
+
 	"github.com/justinas/nosurf"
-	"github.com/tullo/snptx/pkg/models"
 )
 
 func secureHeaders(next http.Handler) http.Handler {
@@ -85,14 +86,31 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
-		// do a database lookup with user ID from session data
-		user, err := app.users.Get(app.session.GetString(r, "authenticatedUserID"))
-		// remove user ID from session if user not found or deactivated
-		if errors.Is(err, models.ErrNoRecord) || !user.Active {
+		uid := app.session.GetString(r, "authenticatedUserID")
+		if len(uid) == 0 {
+			// clean up user session state
 			app.session.Remove(r, "authenticatedUserID")
 			next.ServeHTTP(w, r)
 			return
-		} else if err != nil {
+		}
+
+		// lookup user with id from users session data
+		usr, err := app.users.Retrieve(r.Context(), uid)
+		if errors.Is(err, user.ErrNotFound) {
+			// remove session key if no records found
+			app.session.Remove(r, "authenticatedUserID")
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if usr != nil && !usr.Active {
+			// remove session key if user record is in deactivated state
+			app.session.Remove(r, "authenticatedUserID")
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if err != nil {
 			app.serverError(w, err)
 			return
 		}

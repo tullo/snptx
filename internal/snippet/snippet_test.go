@@ -21,6 +21,8 @@ func TestSnippet(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
+	s := snippet.New(db)
+
 	t.Log("Given the need to work with Snippet records.")
 	{
 		t.Log("\tWhen handling a single Snippet.")
@@ -38,13 +40,13 @@ func TestSnippet(t *testing.T) {
 				DateExpires: oneYearLater,
 			}
 
-			s, err := snippet.Create(ctx, db, ns, now)
+			spt, err := s.Create(ctx, ns, now)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to create snippet : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to create snippet.", tests.Success)
 
-			latestS, err := snippet.Latest(ctx, db)
+			latestS, err := s.Latest(ctx)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to list latest snippets: %s.", tests.Failed, err)
 			}
@@ -55,12 +57,12 @@ func TestSnippet(t *testing.T) {
 				t.Fatalf("\t%s\tShould get back at least one snippet.\n", tests.Failed)
 			}
 
-			savedS, err := snippet.Retrieve(ctx, db, s.ID)
+			savedS, err := s.Retrieve(ctx, spt.ID)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to retrieve snippet by ID: %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to retrieve snippet by ID.", tests.Success)
-			if diff := cmp.Diff(s, savedS); diff != "" {
+			if diff := cmp.Diff(spt, savedS); diff != "" {
 				t.Fatalf("\t%s\tShould get back the same snippet. Diff:\n%s", tests.Failed, diff)
 			}
 
@@ -70,12 +72,12 @@ func TestSnippet(t *testing.T) {
 				Content:     tests.StringPointer("Some Day ..."),
 				DateExpires: &addMonthDay,
 			}
-			if err := snippet.Update(ctx, db, s.ID, upd, now); err != nil {
+			if err := s.Update(ctx, spt.ID, upd, now); err != nil {
 				t.Fatalf("\t%s\tShould be able to update snippet : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to update snippet.", tests.Success)
 
-			savedS, err = snippet.Retrieve(ctx, db, s.ID)
+			savedS, err = s.Retrieve(ctx, spt.ID)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to retrieve snippet by ID: %s.", tests.Failed, err)
 			}
@@ -105,12 +107,12 @@ func TestSnippet(t *testing.T) {
 				t.Logf("\t%s\tShould be able to see updates to DateExpires.", tests.Success)
 			}
 
-			if err := snippet.Delete(ctx, db, s.ID); err != nil {
+			if err := s.Delete(ctx, spt.ID); err != nil {
 				t.Fatalf("\t%s\tShould be able to delete snippet : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould be able to delete snippet.", tests.Success)
 
-			_, err = snippet.Retrieve(ctx, db, s.ID)
+			_, err = s.Retrieve(ctx, spt.ID)
 			if errors.Cause(err) != snippet.ErrNotFound {
 				t.Fatalf("\t%s\tShould NOT be able to retrieve snippet : %s.", tests.Failed, err)
 			}

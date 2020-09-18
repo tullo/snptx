@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// Snippet represents a textual extract of something
-type Snippet struct {
+// Info represents a textual extract of something
+type Info struct {
 	ID          string    `db:"snippet_id" json:"id"`
 	Title       string    `db:"title" json:"title"`
 	Content     string    `db:"content" json:"content"`

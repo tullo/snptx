@@ -62,9 +62,9 @@ func newTestApplication(t *testing.T) *application {
 		debug:         false,
 		session:       session,
 		shutdown:      shutdown,
-		snippets:      &mock.SnippetModel{},
+		snippets:      mock.NewSnippet(),
 		templateCache: templateCache,
-		users:         &mock.UserModel{},
+		users:         mock.NewUser(),
 		version:       "develop",
 	}
 }

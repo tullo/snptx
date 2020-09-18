@@ -1,13 +1,16 @@
 package mock
 
 import (
+	"context"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
+	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/user"
-	"github.com/tullo/snptx/pkg/models"
 )
 
-var mockUser = &user.User{
+var mockUser = &user.Info{
 	ID:          "1",
 	Name:        "Alice",
 	Email:       "alice@example.com",
@@ -15,48 +18,79 @@ var mockUser = &user.User{
 	Active:      true,
 }
 
-// UserModel ...
-type UserModel struct{}
-
-// Insert ...
-func (m *UserModel) Insert(name, email, password string) error {
-	switch email {
-	case "dupe@example.com":
-		return models.ErrDuplicateEmail
-	default:
-		return nil
-	}
+// User manages the set of API's for user access. It wraps a sql.DB
+// connection pool.
+type User struct {
 }
 
-// Authenticate ...
-func (m *UserModel) Authenticate(email, password string) (string, error) {
+// NewUser constructs a User for api access.
+func NewUser() User {
+	var u User
+	return u
+}
+
+// Authenticate finds a user by their email and verifies their password.
+func (u User) Authenticate(ctx context.Context, now time.Time, email, password string) (auth.Claims, error) {
+
 	switch email {
 	case "alice@example.com":
 		if password != "validPa$$word" {
-			return "", models.ErrInvalidCredentials
+			return auth.Claims{}, user.ErrAuthenticationFailure
 		}
-		return "1", nil
+		return auth.Claims{StandardClaims: jwt.StandardClaims{Subject: "1"}}, nil
 
 	default:
-		return "", models.ErrInvalidCredentials
+		return auth.Claims{}, user.ErrAuthenticationFailure
 	}
 }
 
-// Get ...
-func (m *UserModel) Get(id string) (*user.User, error) {
+// ChangePassword generates a hash based on the new password and saves it to the db.
+func (u User) ChangePassword(ctx context.Context, id, currentPassword, newPassword string) error {
+	if currentPassword != "validPa$$word" {
+		return user.ErrInvalidCredentials
+	}
+
+	return nil
+}
+
+// Create inserts a new user into the database.
+func (u User) Create(ctx context.Context, nu user.NewUser, now time.Time) (*user.Info, error) {
+	switch nu.Email {
+	case "dupe@example.com":
+		return nil, user.ErrDuplicateEmail
+	default:
+		var usr user.Info
+		return &usr, nil
+	}
+}
+
+// Delete removes a user from the database.
+func (u User) Delete(ctx context.Context, id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return user.ErrInvalidID
+	}
+
+	return nil
+}
+
+// List retrieves a list of existing users from the database.
+func (u User) List(ctx context.Context) ([]user.Info, error) {
+
+	var users []user.Info
+	return users, nil
+}
+
+// Retrieve gets the specified user from the database.
+func (u User) Retrieve(ctx context.Context, id string) (*user.Info, error) {
 	switch id {
 	case "1":
 		return mockUser, nil
 	default:
-		return nil, models.ErrNoRecord
+		return nil, user.ErrNotFound
 	}
 }
 
-// ChangePassword ...
-func (m *UserModel) ChangePassword(id string, currentPassword, newPassword string) error {
-	if currentPassword != "validPa$$word" {
-		return models.ErrInvalidCredentials
-	}
-
+// Update replaces a user document in the database.
+func (u User) Update(context.Context, string, user.UpdateUser, time.Time) error {
 	return nil
 }
