@@ -32,16 +32,16 @@ func noSurf(next http.Handler) http.Handler {
 	return csrfHandler
 }
 
-func (app *application) logRequest(next http.Handler) http.Handler {
+func (a *app) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		app.infoLog.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
+		a.infoLog.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
 
 		next.ServeHTTP(w, r)
 	})
 }
 
 // recoverPanic recovers the panic and logs the cause
-func (app *application) recoverPanic(next http.Handler) http.Handler {
+func (a *app) recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// called last on the way up in the middleware chain while Go unwinds the stack
 		defer func() {
@@ -51,7 +51,7 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 				// after a response has been sent.
 				w.Header().Set("Connection", "close")
 				// format error with default textual representation
-				app.serverError(w, fmt.Errorf("%s", err))
+				a.serverError(w, fmt.Errorf("%s", err))
 			}
 		}()
 
@@ -60,11 +60,11 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 }
 
 // requireAuthentication redirects the unauthenticated user to the login page
-func (app *application) requireAuthentication(next http.Handler) http.Handler {
+func (a *app) requireAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !app.isAuthenticated(r) {
+		if !a.isAuthenticated(r) {
 			// add the path the user is trying to access to session data
-			app.session.Put(r, "redirectPathAfterLogin", r.URL.Path)
+			a.session.Put(r, "redirectPathAfterLogin", r.URL.Path)
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}
@@ -77,41 +77,41 @@ func (app *application) requireAuthentication(next http.Handler) http.Handler {
 }
 
 // authenticate checks the database for user status (active)
-func (app *application) authenticate(next http.Handler) http.Handler {
+func (a *app) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// check if user is logged in
-		exists := app.session.Exists(r, "authenticatedUserID")
+		exists := a.session.Exists(r, "authenticatedUserID")
 		if !exists {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		uid := app.session.GetString(r, "authenticatedUserID")
+		uid := a.session.GetString(r, "authenticatedUserID")
 		if len(uid) == 0 {
 			// clean up user session state
-			app.session.Remove(r, "authenticatedUserID")
+			a.session.Remove(r, "authenticatedUserID")
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		// lookup user with id from users session data
-		usr, err := app.users.Retrieve(r.Context(), uid)
+		usr, err := a.users.Retrieve(r.Context(), uid)
 		if errors.Is(err, user.ErrNotFound) {
 			// remove session key if no records found
-			app.session.Remove(r, "authenticatedUserID")
+			a.session.Remove(r, "authenticatedUserID")
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		if usr != nil && !usr.Active {
 			// remove session key if user record is in deactivated state
-			app.session.Remove(r, "authenticatedUserID")
+			a.session.Remove(r, "authenticatedUserID")
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		if err != nil {
-			app.serverError(w, err)
+			a.serverError(w, err)
 			return
 		}
 

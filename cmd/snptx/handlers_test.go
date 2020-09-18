@@ -9,7 +9,7 @@ import (
 
 func TestPing(t *testing.T) {
 
-	app := newTestApplication(t)
+	app := newTestApp(t)
 	// start up a https test server
 	ts := newTestServer(t, app.routes())
 	defer ts.Close()
@@ -29,7 +29,7 @@ func TestPing(t *testing.T) {
 }
 
 func TestShowSnippet(t *testing.T) {
-	app := newTestApplication(t)
+	app := newTestApp(t)
 
 	// start up a https test server
 	ts := newTestServer(t, app.routes())
@@ -67,7 +67,7 @@ func TestShowSnippet(t *testing.T) {
 }
 
 func TestLoginUser(t *testing.T) {
-	app := newTestApplication(t)
+	app := newTestApp(t)
 
 	// start up a https test server
 	ts := newTestServer(t, app.routes())
@@ -115,7 +115,7 @@ func TestLoginUser(t *testing.T) {
 }
 
 func TestChangePassword(t *testing.T) {
-	app := newTestApplication(t)
+	app := newTestApp(t)
 
 	// start up a https test server
 	ts := newTestServer(t, app.routes())
@@ -218,7 +218,7 @@ func TestChangePassword(t *testing.T) {
 }
 
 func TestSignupUser(t *testing.T) {
-	app := newTestApplication(t)
+	app := newTestApp(t)
 
 	// start up a https test server
 	ts := newTestServer(t, app.routes())
@@ -279,7 +279,7 @@ func TestSignupUser(t *testing.T) {
 // - Authenticated users are shown the form to create a new snippet.
 func TestCreateSnippetForm(t *testing.T) {
 
-	app := newTestApplication(t)
+	app := newTestApp(t)
 
 	// start the https test server
 	ts := newTestServer(t, app.routes())

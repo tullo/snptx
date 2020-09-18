@@ -34,8 +34,8 @@ func extractCSRFToken(t *testing.T, body []byte) string {
 	return html.UnescapeString(string(matches[1]))
 }
 
-// newTestApplication creates an application struct with mock loggers
-func newTestApplication(t *testing.T) *application {
+// newTestApp creates an application struct with mock loggers
+func newTestApp(t *testing.T) *app {
 	// initialize template cache
 	templateCache, err := newTemplateCache("./../../ui/html/")
 	if err != nil {
@@ -56,7 +56,7 @@ func newTestApplication(t *testing.T) *application {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	// app struct instantiation using the mocks for the loggers and database models
-	return &application{
+	return &app{
 		errorLog:      log.New(ioutil.Discard, "", 0),
 		infoLog:       log.New(ioutil.Discard, "", 0),
 		debug:         false,

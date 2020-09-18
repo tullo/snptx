@@ -30,7 +30,7 @@ type contextKey string
 const contextKeyIsAuthenticated = contextKey("isAuthenticated")
 
 // define the interfaces inline to keep the code simple
-type application struct {
+type app struct {
 	debug    bool
 	errorLog *log.Logger
 	infoLog  *log.Logger
@@ -55,7 +55,7 @@ type application struct {
 
 // SignalShutdown is used to gracefully shutdown the app when an integrity
 // issue is identified.
-func (a *application) SignalShutdown() {
+func (a *app) SignalShutdown() {
 	a.shutdown <- syscall.SIGTERM
 }
 
@@ -156,7 +156,7 @@ func run() error {
 	snippets := snippet.New(db)
 	users := user.New(db)
 
-	app := &application{
+	app := &app{
 		debug:         cfg.Web.DebugMode,
 		errorLog:      errorLog,
 		infoLog:       infoLog,
