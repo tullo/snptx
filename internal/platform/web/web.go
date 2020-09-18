@@ -3,7 +3,7 @@ package web
 import "time"
 
 // ctxKey represents the type of value for the context key.
-type ctxKey int
+type ctxKey uint
 
 // KeyValues is how request values or stored/retrieved.
 const KeyValues ctxKey = 1
