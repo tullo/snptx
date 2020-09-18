@@ -32,8 +32,7 @@ const contextKeyIsAuthenticated = contextKey("isAuthenticated")
 // define the interfaces inline to keep the code simple
 type app struct {
 	debug    bool
-	errorLog *log.Logger
-	infoLog  *log.Logger
+	log      *log.Logger
 	session  *sessions.Session
 	shutdown chan os.Signal
 	snippets interface {
@@ -60,13 +59,15 @@ func (a *app) SignalShutdown() {
 }
 
 func main() {
-	if err := run(); err != nil {
-		log.Printf("error: %s", err)
+	log := log.New(os.Stdout, "SNPTX : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+
+	if err := run(log); err != nil {
+		log.Println("main: error:", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(log *log.Logger) error {
 
 	// =========================================================================
 	// Configuration
@@ -109,10 +110,7 @@ func run() error {
 	// =========================================================================
 	// Start Database
 
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
-
-	infoLog.Println("main : Started : Initializing database support")
+	log.Println("main : Started : Initializing database support")
 
 	db, err := database.Open(database.Config{
 		User:       cfg.DB.User,
@@ -125,19 +123,19 @@ func run() error {
 		return errors.Wrap(err, "connecting to db")
 	}
 	defer func() {
-		infoLog.Printf("main : Database Stopping : %s", cfg.DB.Host)
+		log.Printf("main : Database Stopping : %s", cfg.DB.Host)
 		db.Close()
 	}()
 
 	// =========================================================================
 	// Start Web Application
 
-	infoLog.Println("main : Started : Initializing web application")
+	log.Println("main : Started : Initializing web application")
 
 	// initialize template cache
 	templateCache, err := newTemplateCache("./ui/html/")
 	if err != nil {
-		errorLog.Fatal(err)
+		return err
 	}
 
 	// sessions expire after 12 hours
@@ -158,8 +156,7 @@ func run() error {
 
 	app := &app{
 		debug:         cfg.Web.DebugMode,
-		errorLog:      errorLog,
-		infoLog:       infoLog,
+		log:           log,
 		session:       session,
 		shutdown:      shutdown,
 		snippets:      snippets,
@@ -177,7 +174,7 @@ func run() error {
 
 	srv := &http.Server{
 		Addr:         cfg.Web.APIHost,
-		ErrorLog:     errorLog,
+		ErrorLog:     log,
 		Handler:      app.routes(),
 		TLSConfig:    tlsConfig,
 		IdleTimeout:  cfg.Web.IdleTimeout,
@@ -191,7 +188,7 @@ func run() error {
 
 	// Start the application listening for requests.
 	go func() {
-		infoLog.Printf("Starting server on %s (%s)", cfg.Web.APIHost, build[:7])
+		log.Printf("Starting server on %s (%s)", cfg.Web.APIHost, build[:7])
 		serverErrors <- srv.ListenAndServeTLS("./tls/localhost/cert.pem", "./tls/localhost/key.pem")
 	}()
 
@@ -204,7 +201,7 @@ func run() error {
 		return errors.Wrap(err, "server error")
 
 	case sig := <-shutdown:
-		infoLog.Printf("main : %v : Start shutdown", sig)
+		log.Printf("main : %v : Start shutdown", sig)
 
 		// Give outstanding requests a deadline for completion.
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
@@ -213,7 +210,7 @@ func run() error {
 		// Asking listener to shutdown and load shed.
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			infoLog.Printf("main : Graceful shutdown did not complete in %v : %v", cfg.Web.ShutdownTimeout, err)
+			log.Printf("main : Graceful shutdown did not complete in %v : %v", cfg.Web.ShutdownTimeout, err)
 			err = srv.Close()
 		}
 

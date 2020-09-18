@@ -57,8 +57,7 @@ func newTestApp(t *testing.T) *app {
 
 	// app struct instantiation using the mocks for the loggers and database models
 	return &app{
-		errorLog:      log.New(ioutil.Discard, "", 0),
-		infoLog:       log.New(ioutil.Discard, "", 0),
+		log:           log.New(ioutil.Discard, "", 0),
 		debug:         false,
 		session:       session,
 		shutdown:      shutdown,
