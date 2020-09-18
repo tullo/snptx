@@ -3,8 +3,10 @@
 {{define "title"}}Snippet {{shortID .Snippet.ID}}{{end}}
 
 {{define "main"}}
+    <h2>Snippet: {{.Snippet.Title}}</h2>
+<form action="/snippet/{{.Snippet.ID}}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
     {{with .Snippet}}
-    <h2>Snippet: {{.Title}}</h2>
     <div class='snippet'>
         <div class='metadata'>
             <strong>{{.Title}}</strong>
@@ -18,4 +20,6 @@
         </div>
     </div>
     {{end}}
+    <input type='submit' value='Delete'>
+</form>
 {{- end}}

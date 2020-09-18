@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/justinas/nosurf"
 	"github.com/tullo/snptx/internal/forms"
 	"github.com/tullo/snptx/internal/snippet"
 	"github.com/tullo/snptx/internal/user"
@@ -27,6 +28,17 @@ func (a *app) about(w http.ResponseWriter, r *http.Request) {
 	a.render(w, r, "about.page.tmpl", &templateData{})
 }
 
+func (a *app) deleteSnippet(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get(":id")
+	err := a.snippets.Delete(r.Context(), id)
+	if err != nil {
+		a.serverError(w, err)
+		return
+	}
+	a.session.Put(r, "flash", "Snippet successfully deleted!")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 func (a *app) showSnippet(w http.ResponseWriter, r *http.Request) {
 	// pat does not strip the colon from the named capture key,
 	// get the value of ":id" from the query string instead of "id"
@@ -43,7 +55,8 @@ func (a *app) showSnippet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, r, "show.page.tmpl", &templateData{
-		Snippet: s,
+		Snippet:   s,
+		CSRFToken: nosurf.Token(r),
 	})
 }
 

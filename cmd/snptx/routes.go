@@ -22,6 +22,7 @@ func (a *app) routes() http.Handler {
 	mux.Get("/snippet/create", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.createSnippetForm))
 	mux.Post("/snippet/create", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.createSnippet))
 	mux.Get("/snippet/:id", dynamicMiddleware.ThenFunc(a.showSnippet))
+	mux.Post("/snippet/:id", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.deleteSnippet))
 	mux.Get("/snippet/:id/edit", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.updateSnippetForm))
 	mux.Post("/snippet/:id/edit", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.updateSnippet))
 
