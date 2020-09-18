@@ -6,7 +6,7 @@ networks:
 
 services:
   db:
-    container_name: web_db
+    container_name: db
     networks:
       - shared-network
     image: postgres:12.4-alpine
