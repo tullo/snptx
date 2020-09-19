@@ -80,8 +80,8 @@ func (u User) List(ctx context.Context) ([]user.Info, error) {
 	return users, nil
 }
 
-// Retrieve gets the specified user from the database.
-func (u User) Retrieve(ctx context.Context, id string) (*user.Info, error) {
+// QueryByID gets the specified user from the database.
+func (u User) QueryByID(ctx context.Context, id string) (*user.Info, error) {
 	switch id {
 	case "1":
 		return mockUser, nil

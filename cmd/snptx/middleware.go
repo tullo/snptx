@@ -95,7 +95,7 @@ func (a *app) authenticate(next http.Handler) http.Handler {
 		}
 
 		// lookup user with id from users session data
-		usr, err := a.users.Retrieve(r.Context(), uid)
+		usr, err := a.users.QueryByID(r.Context(), uid)
 		if errors.Is(err, user.ErrNotFound) {
 			// remove session key if no records found
 			a.session.Remove(r, "authenticatedUserID")

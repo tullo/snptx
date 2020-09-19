@@ -278,7 +278,7 @@ func (a *app) userProfile(w http.ResponseWriter, r *http.Request) {
 	userID := a.session.GetString(r, "authenticatedUserID")
 
 	// retreive user details from the database
-	usr, err := a.users.Retrieve(r.Context(), userID)
+	usr, err := a.users.QueryByID(r.Context(), userID)
 	if err != nil {
 		a.serverError(w, err)
 		return

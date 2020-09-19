@@ -48,7 +48,7 @@ type app struct {
 		Authenticate(context.Context, time.Time, string, string) (auth.Claims, error)
 		Create(context.Context, user.NewUser, time.Time) (*user.Info, error)
 		ChangePassword(context.Context, string, string, string) error
-		Retrieve(context.Context, string) (*user.Info, error)
+		QueryByID(context.Context, string) (*user.Info, error)
 	}
 	version string
 }

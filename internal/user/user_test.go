@@ -47,7 +47,7 @@ func TestUser(t *testing.T) {
 			t.Logf("\t%s\tShould be able to create user.", tests.Success)
 			userID := usr.ID
 
-			savedU, err := u.Retrieve(ctx, usr.ID)
+			savedU, err := u.QueryByID(ctx, usr.ID)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to retrieve user by ID: %s.", tests.Failed, err)
 			}
@@ -68,7 +68,7 @@ func TestUser(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould be able to update user.", tests.Success)
 
-			savedU, err = u.Retrieve(ctx, usr.ID)
+			savedU, err = u.QueryByID(ctx, usr.ID)
 			if err != nil {
 				t.Fatalf("\t%s\tShould be able to retrieve user : %s.", tests.Failed, err)
 			}
@@ -105,7 +105,7 @@ func TestUser(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould be able to delete user.", tests.Success)
 
-			_, err = u.Retrieve(ctx, userID)
+			_, err = u.QueryByID(ctx, userID)
 			if errors.Cause(err) != user.ErrNotFound {
 				t.Fatalf("\t%s\tShould NOT be able to retrieve user : %s.", tests.Failed, err)
 			}

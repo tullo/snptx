@@ -102,8 +102,8 @@ func (u User) Create(ctx context.Context, n NewUser, now time.Time) (*Info, erro
 	return &usr, nil
 }
 
-// Retrieve gets the specified user from the database.
-func (u User) Retrieve(ctx context.Context, id string) (*Info, error) {
+// QueryByID gets the specified user from the database.
+func (u User) QueryByID(ctx context.Context, id string) (*Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.user.Retrieve")
 	defer span.End()
 
@@ -129,7 +129,7 @@ func (u User) Update(ctx context.Context, id string, upd UpdateUser, now time.Ti
 	ctx, span := trace.StartSpan(ctx, "internal.user.Update")
 	defer span.End()
 
-	usr, err := u.Retrieve(ctx, id)
+	usr, err := u.QueryByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (u User) Authenticate(ctx context.Context, now time.Time, email, password s
 // ChangePassword generates a hash based on the new password and saves it to the db.
 func (u User) ChangePassword(ctx context.Context, id string, currentPassword, newPassword string) error {
 
-	usr, err := u.Retrieve(ctx, id)
+	usr, err := u.QueryByID(ctx, id)
 	if err != nil {
 		return err
 	}
