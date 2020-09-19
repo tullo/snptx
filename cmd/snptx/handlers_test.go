@@ -201,10 +201,6 @@ func TestChangePassword(t *testing.T) {
 			form.Add("csrf_token", tt.csrfToken)
 
 			code, _, body := ts.postForm(t, "/user/change-password", form)
-			//fmt.Println(code, string(body))
-			//code, headers, body := ts.postForm(t, "/user/change-password", form)
-			//fmt.Println(code, string(body), headers)
-
 			if code != tt.wantCode {
 				t.Errorf("want %d; got %d", tt.wantCode, code)
 			}
@@ -324,6 +320,62 @@ func TestCreateSnippetForm(t *testing.T) {
 		formTag := "<form action='/snippet/create' method='POST'>"
 		if !bytes.Contains(body, []byte(formTag)) {
 			t.Errorf("want body %s to contain %q", body, formTag)
+		}
+	})
+}
+
+// TestDeleteSnippet checks that:
+// - Unauthenticated users are redirected to the login form.
+// - Authenticated users can delete snippets.
+func TestDeleteSnippet(t *testing.T) {
+
+	app := newTestApp(t)
+
+	// start the https test server
+	ts := newTestServer(t, app.routes())
+	defer ts.Close()
+
+	// get snippet page properties
+	code, _, response := ts.get(t, "/snippet/1")
+	if code != http.StatusOK {
+		t.Errorf("want %d; got %d", http.StatusOK, code)
+	}
+
+	// prepare form with cors token
+	csrfToken := extractCSRFToken(t, response)
+	form := url.Values{}
+	form.Add("csrf_token", csrfToken)
+
+	t.Run("Unauthenticated", func(t *testing.T) {
+		code, _, _ := ts.postForm(t, "/snippet/1", form)
+		if code != http.StatusSeeOther {
+			t.Errorf("want %d; got %d", http.StatusSeeOther, code)
+		}
+	})
+
+	t.Run("Authenticated", func(t *testing.T) {
+
+		// mimic the workflow of logging in as a user
+		_, _, body := ts.get(t, "/user/login")
+
+		// extract csrf token from the login page
+		csrfToken := extractCSRFToken(t, body)
+
+		// post the form
+		form := url.Values{}
+		form.Add("email", "alice@example.com")
+		form.Add("password", "validPa$$word")
+		form.Add("csrf_token", csrfToken)
+		ts.postForm(t, "/user/login", form)
+
+		// authenticated users may delete snippets
+		code, headers, _ := ts.postForm(t, "/snippet/1", form)
+		if code != http.StatusSeeOther {
+			t.Errorf("want %d; got %d", http.StatusSeeOther, code)
+		}
+		// should be redirected to home page
+		if headers.Get("Location") != "/" {
+			t.Errorf("want %s; got %s", "/", headers.Get("Location"))
 		}
 	})
 }
