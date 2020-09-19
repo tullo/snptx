@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/platform/auth"
+	"github.com/tullo/snptx/internal/platform/sec"
 	"github.com/tullo/snptx/internal/tests"
 	"github.com/tullo/snptx/internal/user"
 )
@@ -22,7 +23,7 @@ func TestUser(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
-	u := user.New(db)
+	u := user.New(db, sec.DefaultParams())
 
 	t.Log("Given the need to work with User records.")
 	{
@@ -124,7 +125,7 @@ func TestAuthenticate(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
-	u := user.New(db)
+	u := user.New(db, sec.DefaultParams())
 
 	t.Log("Given the need to authenticate users")
 	{
@@ -195,7 +196,7 @@ func TestChangePassword(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
-	u := user.New(db)
+	u := user.New(db, sec.DefaultParams())
 
 	t.Log("Given the need to change passwords")
 	{

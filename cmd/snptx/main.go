@@ -17,6 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/platform/database"
+	"github.com/tullo/snptx/internal/platform/sec"
 	"github.com/tullo/snptx/internal/snippet"
 	"github.com/tullo/snptx/internal/user"
 )
@@ -92,6 +93,14 @@ func run(log *log.Logger) error {
 			Name       string `conf:"default:postgres"`
 			DisableTLS bool   `conf:"default:false"`
 		}
+		Aragon struct {
+			// Note: Changing the value of Parallelism - changes the hash output!
+			Memory      uint `conf:"default:131072"` // 128 * 1024 (KB) - memory used by the Argon2 algorithm
+			Iterations  uint `conf:"default:4"`      // number of passes over the memory
+			Parallelism uint `conf:"default:4"`      // number of threads to use on a machine with multiple cores
+			SaltLength  uint `conf:"default:16"`     // 16 bytes is recommended for password hashing
+			KeyLength   uint `conf:"default:32"`     // length of the generated password hash
+		}
 		Args conf.Args
 	}
 
@@ -132,6 +141,15 @@ func run(log *log.Logger) error {
 
 	log.Println("main : Started : Initializing web application")
 
+	// parameters used for password hashing
+	hp := sec.HashParams{
+		Memory:      uint32(cfg.Aragon.Memory),
+		Iterations:  uint32(cfg.Aragon.Iterations),
+		Parallelism: uint8(cfg.Aragon.Parallelism),
+		SaltLength:  uint32(cfg.Aragon.SaltLength),
+		KeyLength:   uint32(cfg.Aragon.KeyLength),
+	}
+
 	// initialize template cache
 	templateCache, err := newTemplateCache("./ui/html/")
 	if err != nil {
@@ -152,7 +170,7 @@ func run(log *log.Logger) error {
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	snippets := snippet.New(db)
-	users := user.New(db)
+	users := user.New(db, sec.Params(hp))
 
 	app := &app{
 		debug:         cfg.Web.DebugMode,

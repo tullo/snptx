@@ -42,11 +42,12 @@ var (
 // User manages the set of API's for user access. It wraps a sql.DB connection pool.
 type User struct {
 	db *sqlx.DB
+	hp *argon2id.Params
 }
 
 // New constructs a User for api access.
-func New(db *sqlx.DB) User {
-	return User{db: db}
+func New(db *sqlx.DB, hp *argon2id.Params) User {
+	return User{db: db, hp: hp}
 }
 
 // List retrieves a list of existing users from the database.
@@ -69,7 +70,7 @@ func (u User) Create(ctx context.Context, n NewUser, now time.Time) (*Info, erro
 	ctx, span := trace.StartSpan(ctx, "internal.user.Create")
 	defer span.End()
 
-	hash, err := argon2id.CreateHash(n.Password, argon2id.DefaultParams)
+	hash, err := argon2id.CreateHash(n.Password, u.hp)
 	if err != nil {
 		return nil, errors.Wrap(err, "generating password hash")
 	}
@@ -143,7 +144,7 @@ func (u User) Update(ctx context.Context, id string, upd UpdateUser, now time.Ti
 		usr.Roles = upd.Roles
 	}
 	if upd.Password != nil {
-		hash, err := argon2id.CreateHash(*upd.Password, argon2id.DefaultParams)
+		hash, err := argon2id.CreateHash(*upd.Password, u.hp)
 		if err != nil {
 			return errors.Wrap(err, "generating password hash")
 		}
@@ -235,7 +236,7 @@ func (u User) ChangePassword(ctx context.Context, id string, currentPassword, ne
 	}
 
 	// generate hash based on the new password
-	hash, err := argon2id.CreateHash(newPassword, argon2id.DefaultParams)
+	hash, err := argon2id.CreateHash(newPassword, u.hp)
 	if err != nil {
 		return errors.Wrap(err, "generating password hash")
 	}

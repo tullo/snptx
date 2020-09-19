@@ -13,7 +13,8 @@ all: snptx test-cover-profile test-cover-text check
 run: up-db go-seed go-run
 
 go-run:
-	@go run ./cmd/snptx --db-disable-tls=1
+	@go run ./cmd/snptx --db-disable-tls=1 \
+		--aragon-memory=$$(( 64 * 1026 )) --aragon-iterations=1 --aragon-parallelism=1
 
 go-migrate:
 	@go run ./cmd/snptx-admin/main.go --db-disable-tls=1 migrate
