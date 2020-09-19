@@ -13,7 +13,6 @@ COPY go.* ./
 # Copy the source code into the image.
 COPY cmd cmd
 COPY internal internal
-COPY pkg pkg
 COPY tls tls
 COPY ui ui
 COPY vendor vendor
