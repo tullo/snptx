@@ -65,6 +65,9 @@ compose-migrate:
 compose-seed: compose-migrate
 	@docker-compose exec snptx /app/admin seed
 
+psql: compose-db-up
+	@docker-compose exec db psql -U postgres
+
 down:
 	@docker-compose down
 
