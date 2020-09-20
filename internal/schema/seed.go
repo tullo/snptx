@@ -38,9 +38,9 @@ const seeds = `
 		NOW(), NOW(), NOW() + INTERVAL '7 days')
 		ON CONFLICT DO NOTHING;
 
-	-- Create admin and regular User with password "gophers"
+	-- Create admin and regular User with password "goroutines"
 	INSERT INTO users (user_id, name, email, roles, password_hash, date_created, date_updated) VALUES
-		('5cf37266-3473-4006-984f-9325122678b7', 'Admin Gopher', 'admin@example.com', '{ADMIN,USER}', '$argon2id$v=19$m=65536,t=1,p=2$HG6d1eJeIhZ40X7+jwNDng$DDUhwjMbLNiK53wg2xcEPjJusnhBCDUbQYVYYNnkKP0', '2019-03-24 00:00:00', '2019-03-24 00:00:00'),
-		('45b5fbd3-755f-4379-8f07-a58d4a30fa2f', 'User Gopher', 'user@example.com', '{USER}', '$argon2id$v=19$m=65536,t=1,p=2$8yweayOAy+aZK/1egvrbEA$OA5QdHwK0rL+dWhWY/1lsv9G1zKF+gaS3yjwZvw4OTI', '2019-03-24 00:00:00', '2019-03-24 00:00:00')
+		('405b059e-f6fc-4ed4-8532-d466264995e2', 'Admin Gopher', 'admin@example.com', '{ADMIN,USER}', '$argon2id$v=19$m=65536,t=1,p=1$k7s9K2Wa/mMakJbzH6C4IA$76puo7jSjAdaZwa6eOwYe6inF7bFDSDf/ryYdDAi8GI', '2020-09-20 00:00:00', '2020-09-20 00:00:00'),
+		('9804845d-9b60-4177-880d-d15c431c36e2', 'User Gopher', 'user@example.com', '{USER}', '$argon2id$v=19$m=65536,t=1,p=1$uc7mAQY4Jbyd6xfw4IycWQ$7R6V5n/DENEg3m46HrCRFaVoooYKd5CYD+ZPSs3Ewg8', '2020-09-20 00:00:00', '2020-09-20 00:00:00')
 		ON CONFLICT DO NOTHING;
 `
