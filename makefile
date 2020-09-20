@@ -5,6 +5,7 @@ export REGISTRY_ACCOUNT = tullo
 export VERSION = 0.1.0
 export DOCKER_BUILDKIT = 1
 export COMPOSE_DOCKER_CLI_BUILD = 1
+export SESSION_SECRET := `openssl rand -base64 32`
 
 .DEFAULT_GOAL := run
 
@@ -18,6 +19,7 @@ config:
 go-run:
 	@go vet ./cmd/... ./internal/...
 	@go run ./cmd/snptx --db-disable-tls=1 --web-debug-mode=true \
+		--web-session-secret=${SESSION_SECRET} \
 		--aragon-memory=$$(( 64 * 1024 )) --aragon-iterations=1 --aragon-parallelism=1
 
 go-migrate:

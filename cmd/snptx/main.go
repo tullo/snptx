@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"log"
@@ -73,14 +74,14 @@ func run(log *log.Logger) error {
 	// =========================================================================
 	// Configuration
 
-	// session secret (should be 32 bytes long) is used to encrypt and authenticate session cookies
+	// session secret (must be 32 bytes long) is used to encrypt and authenticate session cookies
 	// e.g. 'openssl rand -base64 32'
 
 	var cfg struct {
 		Web struct {
 			APIHost         string        `conf:"default::4200"`
 			DebugMode       bool          `conf:"default:false"`
-			SessionSecret   string        `conf:"default:un/MjLYrdgFiQxAHDge/lI/kydfyZRo4T0UF+Mn4xag="`
+			SessionSecret   string        `conf:"noprint"`
 			IdleTimeout     time.Duration `conf:"default:1m"`
 			ReadTimeout     time.Duration `conf:"default:5s"`
 			WriteTimeout    time.Duration `conf:"default:5s"`
@@ -160,6 +161,14 @@ func run(log *log.Logger) error {
 	templateCache, err := newTemplateCache("./ui/html/")
 	if err != nil {
 		return err
+	}
+
+	decoded, err := base64.StdEncoding.DecodeString(cfg.Web.SessionSecret)
+	if err != nil {
+		return errors.Wrap(err, "decoding session secret")
+	}
+	if len(decoded) != 32 {
+		return errors.New("session secret must be exactly 32 bytes long")
 	}
 
 	// sessions expire after 12 hours
