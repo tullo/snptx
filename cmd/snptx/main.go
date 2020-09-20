@@ -119,7 +119,7 @@ func run(log *log.Logger) error {
 	// =========================================================================
 	// Start Database
 
-	log.Println("main : Started : Initializing database support")
+	log.Println("Initializing Database support")
 
 	db, err := database.Open(database.Config{
 		User:       cfg.DB.User,
@@ -132,14 +132,20 @@ func run(log *log.Logger) error {
 		return errors.Wrap(err, "connecting to db")
 	}
 	defer func() {
-		log.Printf("main : Database Stopping : %s", cfg.DB.Host)
+		log.Printf("Database Stopping : %s", cfg.DB.Host)
 		db.Close()
 	}()
 
 	// =========================================================================
 	// Start Web Application
 
-	log.Println("main : Started : Initializing web application")
+	log.Printf("Initializing Application: version %q\n", build)
+
+	out, err := conf.String(&cfg)
+	if err != nil {
+		return errors.Wrap(err, "generating config for output")
+	}
+	log.Printf("Config:\n%v\n", out)
 
 	// parameters used for password hashing
 	hp := sec.HashParams{
@@ -219,7 +225,7 @@ func run(log *log.Logger) error {
 		return errors.Wrap(err, "server error")
 
 	case sig := <-shutdown:
-		log.Printf("main : %v : Start shutdown", sig)
+		log.Printf("Received signal [%v] Start shutdown", sig)
 
 		// Give outstanding requests a deadline for completion.
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTimeout)
@@ -228,7 +234,7 @@ func run(log *log.Logger) error {
 		// Asking listener to shutdown and load shed.
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			log.Printf("main : Graceful shutdown did not complete in %v : %v", cfg.Web.ShutdownTimeout, err)
+			log.Printf("Graceful shutdown did not complete in %v : %v", cfg.Web.ShutdownTimeout, err)
 			err = srv.Close()
 		}
 
