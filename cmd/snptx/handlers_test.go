@@ -174,10 +174,6 @@ func TestChangePassword(t *testing.T) {
 			csrfToken, http.StatusOK, []byte("This field is too short (minimum is 10 characters)"),
 		},
 		{
-			"Invalid New Password 3", "alice@example.com", "validPa$$word", "someRandomString", "gophers",
-			csrfToken, http.StatusOK, []byte("This field is too short (minimum is 10 characters)"),
-		},
-		{
 			"Invalid New Password 4", "alice@example.com", "validPa$$word", "someRandomString", "anotherRandomString",
 			csrfToken, http.StatusOK, []byte("Passwords do not match"),
 		},
