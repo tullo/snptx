@@ -5,7 +5,7 @@ export REGISTRY_ACCOUNT = tullo
 export VERSION = 0.1.0
 export DOCKER_BUILDKIT = 1
 export COMPOSE_DOCKER_CLI_BUILD = 1
-export SESSION_SECRET := `openssl rand -base64 32`
+export SESSION_SECRET = $(shell openssl rand -base64 32)
 
 .DEFAULT_GOAL := run
 

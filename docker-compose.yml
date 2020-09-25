@@ -24,8 +24,10 @@ services:
     ports:
       - 4200:4200
     environment:
+      - SNPTX_WEB_SESSION_SECRET=${SESSION_SECRET}
       - SNPTX_DB_USER=postgres
       - SNPTX_DB_PASSWORD=postgres
       - SNPTX_DB_NAME=postgres
       - SNPTX_DB_HOST=db
       - SNPTX_DB_DISABLE_TLS=1
+    user: "100000"
