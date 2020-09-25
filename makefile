@@ -118,3 +118,20 @@ install:
 	git checkout "2020.1.5" ; \
 	go install -v ./cmd/staticcheck
 	$(shell go env GOPATH)/bin/staticcheck -debug.version
+
+mkcert-install:
+	@echo make sure libnss3-tools is installed \"apt install libnss3-tools\"
+	set -e ; \
+	git clone https://github.com/FiloSottile/mkcert ; \
+	cd mkcert ; \
+	go install -v -ldflags "-X main.Version=$$(git describe --tags)" ; \
+	rm -fr ../mkcert
+	$$(go env GOPATH)/bin/mkcert
+
+mkcert-install-rootCA:
+	$$(go env GOPATH)/bin/mkcert -install
+
+mkcert-generate-certs:
+	$$(go env GOPATH)/bin/mkcert -cert-file ./tls/localhost/cert.pem -key-file ./tls/localhost/key.pem \
+		snptx.test snptx 0.0.0.0 localhost 127.0.0.1 ::1
+	
