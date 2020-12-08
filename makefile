@@ -132,6 +132,6 @@ mkcert-install-rootCA:
 	$$(go env GOPATH)/bin/mkcert -install
 
 mkcert-generate-certs:
+	@mkdir -p tls/localhost
 	$$(go env GOPATH)/bin/mkcert -cert-file ./tls/localhost/cert.pem -key-file ./tls/localhost/key.pem \
 		snptx.test snptx 0.0.0.0 localhost 127.0.0.1 ::1
-	
