@@ -77,7 +77,7 @@ compose-seed: compose-migrate
 compose-psql: compose-db-up
 	@docker-compose exec db psql -U postgres
 
-test:
+test: staticcheck
 	@go test -count=1 -failfast -test.timeout=30s ./...
 
 test-cover-profile:
@@ -116,22 +116,22 @@ deps-cleancache:
 staticcheck:
 	$(shell go env GOPATH)/bin/staticcheck -go 1.15 -tests ./...
 
-.PHONY: install
-install:
+staticcheck-install:
 	set -e ; \
 	git clone git@github.com:dominikh/go-tools.git /tmp/go-tools ; \
 	cd /tmp/go-tools ; \
 	git checkout "2020.1.6" ; \
 	go install -v ./cmd/staticcheck
+	rm -fr /tmp/go-tools
 	$(shell go env GOPATH)/bin/staticcheck -debug.version
 
 mkcert-install:
 	@echo make sure libnss3-tools is installed \"apt install libnss3-tools\"
 	set -e ; \
-	git clone https://github.com/FiloSottile/mkcert ; \
-	cd mkcert ; \
+	git clone https://github.com/FiloSottile/mkcert /tmp/mkcert ; \
+	cd /tmp/mkcert ; \
 	go install -v -ldflags "-X main.Version=$$(git describe --tags)" ; \
-	rm -fr ../mkcert
+	rm -fr /tmp/mkcert
 	$$(go env GOPATH)/bin/mkcert
 
 mkcert-install-rootCA:
