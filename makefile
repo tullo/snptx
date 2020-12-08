@@ -54,6 +54,9 @@ compose-up: docker-build-image
 	@docker-compose up -d --remove-orphans
 	@docker-compose logs -f
 
+compose-down:
+	@docker-compose down
+
 compose-db-up:
 	@docker-compose up --detach --remove-orphans db
 	@echo Waiting for the database to accept connections ...
@@ -68,8 +71,6 @@ compose-seed: compose-migrate
 psql: compose-db-up
 	@docker-compose exec db psql -U postgres
 
-down:
-	@docker-compose down
 
 test:
 	@go test -count=1 -failfast -test.timeout=30s ./...

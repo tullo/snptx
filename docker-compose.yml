@@ -1,4 +1,4 @@
-version: '3'
+version: '3.8'
 
 networks:
   shared-network:
@@ -7,27 +7,31 @@ networks:
 services:
   db:
     container_name: db
-    networks:
-      - shared-network
-    image: postgres:13.1-alpine
-    ports:
-      - 5432:5432
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    image: postgres:13.1-alpine
+    networks:
+      shared-network: null
+    ports:
+    - published: 5432
+      target: 5432
 
   snptx:
     container_name: snptx
-    networks:
-      - shared-network
-    image: tullo/snptx-amd64:0.1.0
-    ports:
-      - 4200:4200
     environment:
-      - SNPTX_WEB_SESSION_SECRET=${SESSION_SECRET}
-      - SNPTX_DB_USER=postgres
-      - SNPTX_DB_PASSWORD=postgres
-      - SNPTX_DB_NAME=postgres
-      - SNPTX_DB_HOST=db
-      - SNPTX_DB_DISABLE_TLS=1
-    user: "100000"
+      ADMIN_DB_DISABLE_TLS: '1'
+      ADMIN_DB_HOST: db
+      SNPTX_DB_DISABLE_TLS: '1'
+      SNPTX_DB_HOST: db
+      SNPTX_DB_NAME: postgres
+      SNPTX_DB_PASSWORD: postgres
+      SNPTX_DB_USER: postgres
+      SNPTX_WEB_SESSION_SECRET: ''
+    image: tullo/snptx-amd64:0.1.0
+    networks:
+      shared-network: null
+    ports:
+    - published: 4200
+      target: 4200
+    user: '100000'
