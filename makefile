@@ -9,6 +9,9 @@ export SESSION_SECRET = $(shell openssl rand -base64 32)
 
 .DEFAULT_GOAL := run
 
+browse:
+	sensible-browser --new-tab https://snptx.127.0.0.1.nip.io:4200/ </dev/null >/dev/null 2>&1 & disown
+
 all: docker-build-image test-cover-profile test-cover-text staticcheck
 
 run: compose-db-up go-seed go-run
@@ -50,6 +53,9 @@ docker-push-image:
 
 gcloud: docker-build-image docker-tag-image docker-push-image
 
+compose-config:
+	@docker-compose config
+
 compose-up: docker-build-image
 	@docker-compose up -d --remove-orphans
 	@docker-compose logs -f
@@ -68,9 +74,8 @@ compose-migrate:
 compose-seed: compose-migrate
 	@docker-compose exec snptx /app/admin seed
 
-psql: compose-db-up
+compose-psql: compose-db-up
 	@docker-compose exec db psql -U postgres
-
 
 test:
 	@go test -count=1 -failfast -test.timeout=30s ./...
@@ -116,7 +121,7 @@ install:
 	set -e ; \
 	git clone git@github.com:dominikh/go-tools.git /tmp/go-tools ; \
 	cd /tmp/go-tools ; \
-	git checkout "2020.1.5" ; \
+	git checkout "2020.1.6" ; \
 	go install -v ./cmd/staticcheck
 	$(shell go env GOPATH)/bin/staticcheck -debug.version
 
@@ -135,4 +140,4 @@ mkcert-install-rootCA:
 mkcert-generate-certs:
 	@mkdir -p tls/localhost
 	$$(go env GOPATH)/bin/mkcert -cert-file ./tls/localhost/cert.pem -key-file ./tls/localhost/key.pem \
-		snptx.test snptx 0.0.0.0 localhost 127.0.0.1 ::1
+		snptx.127.0.0.1.nip.io snptx.test snptx 0.0.0.0 localhost 127.0.0.1 ::1

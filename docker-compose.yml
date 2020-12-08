@@ -27,7 +27,7 @@ services:
       SNPTX_DB_NAME: postgres
       SNPTX_DB_PASSWORD: postgres
       SNPTX_DB_USER: postgres
-      SNPTX_WEB_SESSION_SECRET: ''
+      SNPTX_WEB_SESSION_SECRET: ${SESSION_SECRET}
     image: tullo/snptx-amd64:0.1.0
     networks:
       shared-network: null
