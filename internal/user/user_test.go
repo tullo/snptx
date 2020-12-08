@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/platform/auth"
@@ -165,8 +166,8 @@ func TestAuthenticate(t *testing.T) {
 			want := auth.Claims{}
 			want.Subject = usr.ID
 			want.Roles = usr.Roles
-			want.ExpiresAt = now.Add(time.Hour).Unix()
-			want.IssuedAt = now.Unix()
+			want.ExpiresAt = jwt.NewTime(float64(now.Add(time.Hour).Unix()))
+			want.IssuedAt = jwt.NewTime(float64(now.Unix()))
 
 			if diff := cmp.Diff(want, claims); diff != "" {
 				t.Fatalf("\t%s\tShould get back the expected claims. Diff:\n%s", tests.Failed, diff)

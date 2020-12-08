@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/pkg/errors"
 )
 
@@ -34,8 +34,8 @@ func NewClaims(subject string, roles []string, now time.Time, expires time.Durat
 		Roles: roles,
 		StandardClaims: jwt.StandardClaims{
 			Subject:   subject,
-			IssuedAt:  now.Unix(),
-			ExpiresAt: now.Add(expires).Unix(),
+			IssuedAt:  jwt.NewTime(float64(now.Unix())),
+			ExpiresAt: jwt.NewTime(float64(now.Add(expires).Unix())),
 		},
 	}
 
@@ -43,7 +43,7 @@ func NewClaims(subject string, roles []string, now time.Time, expires time.Durat
 }
 
 // Valid is called during the parsing of a token.
-func (c Claims) Valid() error {
+func (c Claims) Valid(h *jwt.ValidationHelper) error {
 	for _, r := range c.Roles {
 		switch r {
 		case RoleAdmin, RoleUser: // Role is valid.
@@ -51,7 +51,7 @@ func (c Claims) Valid() error {
 			return fmt.Errorf("invalid role %q", r)
 		}
 	}
-	if err := c.StandardClaims.Valid(); err != nil {
+	if err := c.StandardClaims.Valid(h); err != nil {
 		return errors.Wrap(err, "validating standard claims")
 	}
 	return nil

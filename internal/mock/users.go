@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/google/uuid"
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/user"

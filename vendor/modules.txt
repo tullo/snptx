@@ -1,15 +1,15 @@
 # github.com/alexedwards/argon2id v0.0.0-20200802152012-2464efd3196b
 ## explicit
 github.com/alexedwards/argon2id
-# github.com/ardanlabs/conf v1.3.2
+# github.com/ardanlabs/conf v1.3.3
 ## explicit
 github.com/ardanlabs/conf
 # github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40
 ## explicit
 github.com/bmizerany/pat
-# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+# github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 ## explicit
-github.com/dgrijalva/jwt-go
+github.com/dgrijalva/jwt-go/v4
 # github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
 ## explicit
 github.com/dimiro1/darwin
@@ -19,7 +19,7 @@ github.com/golang/groupcache/lru
 # github.com/golangcollege/sessions v1.2.0
 ## explicit
 github.com/golangcollege/sessions
-# github.com/google/go-cmp v0.5.2
+# github.com/google/go-cmp v0.5.4
 ## explicit
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
@@ -39,7 +39,7 @@ github.com/justinas/alice
 # github.com/justinas/nosurf v1.1.1
 ## explicit
 github.com/justinas/nosurf
-# github.com/lib/pq v1.8.0
+# github.com/lib/pq v1.9.0
 ## explicit
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -47,14 +47,14 @@ github.com/lib/pq/scram
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# go.opencensus.io v0.22.4
+# go.opencensus.io v0.22.5
 ## explicit
 go.opencensus.io
 go.opencensus.io/internal
 go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+# golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
 ## explicit
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
@@ -62,6 +62,6 @@ golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20/salsa
-# golang.org/x/sys v0.0.0-20200916084744-dbad9cb7cb7a
+# golang.org/x/sys v0.0.0-20201207223542-d4d67f95c62d
 ## explicit
 golang.org/x/sys/cpu
