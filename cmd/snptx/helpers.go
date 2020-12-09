@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"runtime/debug"
-	"time"
 
 	"github.com/justinas/nosurf"
 )
@@ -44,7 +43,7 @@ func (a *app) addDefaultData(td *templateData, r *http.Request) *templateData {
 	if td == nil {
 		td = &templateData{}
 	}
-	td.CurrentYear = time.Now().Year()
+	td.CurrentYear = a.year
 	td.Version = a.version[:7]
 
 	// add CSRF token to the template data

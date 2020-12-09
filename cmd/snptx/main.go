@@ -52,6 +52,7 @@ type app struct {
 		QueryByID(context.Context, string) (*user.Info, error)
 	}
 	version string
+	year    int
 }
 
 // SignalShutdown is used to gracefully shutdown the app when an integrity
@@ -196,6 +197,7 @@ func run(log *log.Logger) error {
 		templateCache: templateCache,
 		users:         users,
 		version:       build,
+		year:          time.Now().Year(),
 	}
 
 	// use Go’s favored cipher suites (support for forward secrecy)
