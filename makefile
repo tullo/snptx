@@ -16,11 +16,39 @@ all: docker-build-image test-cover-profile test-cover-text staticcheck
 
 run: compose-db-up go-seed go-run
 
-config:
+go-deps-upgrade:
+	@go get -d -t -u -v ./...
+#   -d flag ...download the source code needed to build ...
+#   -t flag ...consider modules needed to build tests ...
+#   -u flag ...use newer minor or patch releases when available 
+
+go-deps-reset:
+	@git checkout -- go.mod
+	@go mod tidy
+	@go mod vendor
+
+go-config:
 	@go run ./cmd/snptx --help
+
+go-mod-tidy:
+	@go mod tidy
+	@go mod vendor
+
+go-mod-list-final:
+	@echo '==>' Final versions that will be used in a build for all direct and indirect dependencies
+	@go list -mod=readonly -m all
+#	-m flag causes list to list modules instead of packages.
+
+go-mod-list-updates:
+	@go list -mod=readonly -json -m -u all
+#	-u flag adds information about available upgrades.
+
+go-mod-why:
+	@go mod why -m google.golang.org/appengine
 
 go-run:
 	@go vet ./cmd/... ./internal/...
+	@echo '==>' Activating debug mode to get detailed errors and stack traces in the http response.
 	@go run ./cmd/snptx --db-disable-tls=1 --web-debug-mode=true \
 		--web-session-secret=${SESSION_SECRET} \
 		--aragon-memory=$$(( 64 * 1024 )) --aragon-iterations=1 --aragon-parallelism=1
@@ -30,6 +58,21 @@ go-migrate:
 
 go-seed: go-migrate
 	@go run ./cmd/snptx-admin/main.go --db-disable-tls=1 seed
+
+go-test: staticcheck
+	@go test -count=1 -failfast -test.timeout=30s ./...
+
+go-test-coverage-summary:
+	@go test -cover ./...
+
+go-test-coverage-profile:
+	@go test -test.timeout=30s -covermode=count -coverprofile=/tmp/profile.out ./...
+
+go-tool-cover-text:
+	@go tool cover -func=/tmp/profile.out
+
+go-tool-cover-html:
+	@go tool cover -html=/tmp/profile.out
 
 docker-build-image: staticcheck
 	@go vet ./cmd/... ./internal/...
@@ -83,38 +126,11 @@ compose-seed: compose-migrate
 compose-psql: compose-db-up
 	@docker-compose exec db psql -U postgres
 
-test: staticcheck
-	@go test -count=1 -failfast -test.timeout=30s ./...
-
-test-cover-profile:
-	@go test -test.timeout=30s -coverprofile=/tmp/profile.out ./...
-
-test-cover-text:
-	@go tool cover -func=/tmp/profile.out
-
-test-cover-html:
-	@go tool cover -html=/tmp/profile.out
-
 docker-stop-all:
 	@docker container stop $$(docker container ls -aq --filter name=db --filter name=snptx)
 
 docker-remove-all: docker-stop-all
 	@docker container rm $$(docker container ls -aq --filter name=db --filter name=snptx)
-
-tidy:
-	@go mod tidy
-	@go mod vendor
-
-deps-reset:
-	@git checkout -- go.mod
-	@go mod tidy
-	@go mod vendor
-
-deps-upgrade:
-	@go get -d -t -u -v ./...
-#   -d flag ...download the source code needed to build ...
-#   -t flag ...consider modules needed to build tests ...
-#   -u flag ...use newer minor or patch releases when available 
 
 deps-cleancache:
 	@go clean -modcache
