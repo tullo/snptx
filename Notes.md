@@ -65,7 +65,7 @@ http.FileServer
 * application is serving large files
 * and you want to support resumable downloads
 * example: to request bytes 100-199 of the logo.png
-* `curl -i -H "Range: bytes=100-199" --output - http://localhost:4200/static/img/logo.png`
+* `curl -i -H "Range: bytes=100-199" --output - https://localhost:4200/static/img/logo.png`
 
 ```console
 HTTP/1.1 206 Partial Content
