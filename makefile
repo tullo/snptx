@@ -56,9 +56,15 @@ gcloud: docker-build-image docker-tag-image docker-push-image
 compose-config:
 	@docker-compose config
 
+compose-logs:
+	@docker-compose logs -f
+
 compose-up: docker-build-image
 	@docker-compose up -d --remove-orphans
-	@docker-compose logs -f
+	@docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
+	@docker-compose logs
+	@docker-compose exec snptx /app/admin migrate
+	@docker-compose exec snptx /app/admin seed
 
 compose-down:
 	@docker-compose down
