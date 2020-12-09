@@ -1,6 +1,6 @@
 # snptx
 
-![Go](https://github.com/tullo/snptx/workflows/Go/badge.svg)
+![Go](https://github.com/tullo/snptx/workflows/Go/badge.svg) ![CodeQL](https://github.com/tullo/snptx/workflows/CodeQL/badge.svg)
 
 To launch the db & app with seed data (deps: docker, docker-compose) run:
 
