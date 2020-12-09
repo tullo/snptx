@@ -96,10 +96,10 @@ test-cover-html:
 	@go tool cover -html=/tmp/profile.out
 
 docker-stop-all:
-	@docker container stop $$(docker container ls -q --filter name=db)
+	@docker container stop $$(docker container ls -aq --filter name=db --filter name=snptx)
 
-docker-remove-all:
-	@docker container rm $$(docker container ls -aq --filter "name=db")
+docker-remove-all: docker-stop-all
+	@docker container rm $$(docker container ls -aq --filter name=db --filter name=snptx)
 
 tidy:
 	@go mod tidy
