@@ -12,7 +12,7 @@ html, body {
 
 body {
     line-height: 1.5;
-    background-color: #F1F3F6;
+    background-color: #0d1117;
     color: #34495E;
     overflow-y: scroll;
 }
@@ -45,6 +45,7 @@ h1 a:hover {
 }
 
 h2 {
+    color: #58a6ff;
     font-size: 22px;
     margin-bottom: 36px;
     position: relative;
@@ -52,12 +53,13 @@ h2 {
 }
 
 a {
-    color: #62CB31;
+    color: darkgrey;
     text-decoration: none;
 }
 
 a:hover {
-    color: #4EB722;
+    background-color: #34495e;
+    color: #000;
     text-decoration: underline;
 }
 
@@ -89,7 +91,7 @@ nav {
     border-bottom: 1px solid #E4E5E7;
     padding-top: 17px;
     padding-bottom: 15px;
-    background: #F7F9FA;
+    background-color: #000;
     height: 60px;
     color: #6A6C6F;
 }
@@ -124,6 +126,7 @@ nav a.live {
 }
 
 nav a.live:hover {
+    color: #000;
     text-decoration: none;
 }
 
@@ -144,7 +147,7 @@ nav a.live:after {
 }
 
 a.button, input[type="submit"] {
-    background-color: #62CB31;
+    background-color: #2f4f4f;
     border-radius: 3px;
     color: #FFFFFF;
     padding: 18px 27px;
@@ -155,7 +158,7 @@ a.button, input[type="submit"] {
 }
 
 a.button:hover, input[type="submit"]:hover {
-    background-color: #4EB722;
+    background-color: #8fbc8f;
     color: #FFFFFF;
     cursor: pointer;
     text-decoration: none;
@@ -165,8 +168,12 @@ form div {
     margin-bottom: 18px;
 }
 
+form div.snippet div {
+    margin-bottom: 0;
+}
+
 form div:last-child {
-    border-top: 1px dashed #E4E5E7;
+    border-top: 1px none;
 }
 
 form input[type="radio"] {
@@ -181,13 +188,14 @@ form input[type="text"], form input[type="password"], form input[type="email"] {
 }
 
 form input[type=text], form input[type="password"], form input[type="email"], textarea {
-    color: #6A6C6F;
-    background: #FFFFFF;
+    color: #a9a9a9;
+    background-color: #131419;
     border: 1px solid #E4E5E7;
     border-radius: 3px;
 }
 
 form label {
+    color: #fdf5e6;
     display: inline-block;
     margin-bottom: 9px;
 }
@@ -213,7 +221,7 @@ button {
     background: none;
     padding: 0;
     border: none;
-    color: #62CB31;
+    color: #58a6ff;
     text-decoration: none;
 }
 
@@ -224,7 +232,8 @@ button:hover {
 }
 
 .snippet {
-    background-color: #FFFFFF;
+    background-color: #34495e;
+    color: #f5fffa;
     border: 1px solid #E4E5E7;
     border-radius: 3px;
 }
@@ -236,8 +245,8 @@ button:hover {
 }
 
 .snippet .metadata {
-    background-color: #F7F9FA;
-    color: #6A6C6F;
+    background-color: #000;
+    color: #2f4f4f;
     padding: 0.75em 18px;
     overflow: auto;
 }
@@ -247,7 +256,7 @@ button:hover {
 }
 
 .snippet .metadata strong {
-    color: #34495E;
+    color: #6495ed;
 }
 
 .snippet .metadata time {
@@ -281,7 +290,7 @@ div.error {
 }
 
 table {
-    background: white;
+    background-color: #708090;
     border: 1px solid #E4E5E7;
     border-collapse: collapse;
     width: 100%;
@@ -290,11 +299,12 @@ table {
 td, th {
     text-align: left;
     padding: 9px 18px;
+    color: #000;
 }
 
 th:last-child, td:last-child {
     text-align: right;
-    color: #6A6C6F;
+    color: #000;
 }
 
 tr {
@@ -302,14 +312,14 @@ tr {
 }
 
 tr:nth-child(2n) {
-    background-color: #F7F9FA;
+    background-color: #2f4f4f;
 }
 
 footer {
     border-top: 1px solid #E4E5E7;
     padding-top: 17px;
     padding-bottom: 15px;
-    background: #F7F9FA;
+    background-color: #000;
     height: 60px;
     color: #6A6C6F;
     text-align: center;
