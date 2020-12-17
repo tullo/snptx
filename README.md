@@ -1,6 +1,6 @@
 # snptx
 
-![Go](https://github.com/tullo/snptx/workflows/Go/badge.svg) ![CodeQL](https://github.com/tullo/snptx/workflows/CodeQL/badge.svg)
+![Go](https://github.com/tullo/snptx/workflows/Go/badge.svg) ![CodeQL](https://github.com/tullo/snptx/workflows/CodeQL/badge.svg) [![codecov](https://codecov.io/gh/tullo/snptx/branch/master/graph/badge.svg?token=R891ZHOLF6)](https://codecov.io/gh/tullo/snptx)
 
 ## Webapp build & start
 
