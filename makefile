@@ -44,7 +44,7 @@ go-mod-list-updates:
 #	-u flag adds information about available upgrades.
 
 go-mod-why:
-	@go mod why -m google.golang.org/appengine
+	@go mod why -m golang.org/x/sys
 
 go-run:
 	@go vet ./cmd/... ./internal/...
@@ -142,8 +142,9 @@ staticcheck-install:
 	set -e ; \
 	git clone git@github.com:dominikh/go-tools.git /tmp/go-tools ; \
 	cd /tmp/go-tools ; \
-	git checkout "2020.1.6" ; \
-	go install -v ./cmd/staticcheck
+	git checkout 2020.2.1 ; \
+	go get ./...; \
+	go install ./... ; \
 	rm -fr /tmp/go-tools
 	$(shell go env GOPATH)/bin/staticcheck -debug.version
 
