@@ -1,4 +1,4 @@
-# github.com/alexedwards/argon2id v0.0.0-20200802152012-2464efd3196b
+# github.com/alexedwards/argon2id v0.0.0-20201228115903-cf543ebc1f7b
 ## explicit
 github.com/alexedwards/argon2id
 # github.com/ardanlabs/conf v1.3.3
@@ -26,10 +26,10 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/uuid v1.1.2
+# github.com/google/uuid v1.2.0
 ## explicit
 github.com/google/uuid
-# github.com/jmoiron/sqlx v1.2.0
+# github.com/jmoiron/sqlx v1.3.1
 ## explicit
 github.com/jmoiron/sqlx
 github.com/jmoiron/sqlx/reflectx
@@ -54,14 +54,13 @@ go.opencensus.io/internal
 go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
-## explicit
+# golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20/salsa
-# golang.org/x/sys v0.0.0-20201207223542-d4d67f95c62d
+# golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
 ## explicit
 golang.org/x/sys/cpu
