@@ -10,7 +10,8 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    # https://docs.github.com/en/actions/reference/specifications-for-github-hosted-runners
     steps:
 
     - name: Set up Go 1.15.7
