@@ -12,7 +12,7 @@ export SESSION_SECRET = $(shell openssl rand -base64 32)
 browse:
 	sensible-browser --new-tab https://snptx.127.0.0.1.nip.io:4200/ </dev/null >/dev/null 2>&1 & disown
 
-all: docker-build-image test-cover-profile test-cover-text staticcheck
+all: docker-build-image go-test-coverage-profile go-tool-cover-text staticcheck
 
 run: compose-db-up go-seed go-run
 
