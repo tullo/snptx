@@ -13,9 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ardanlabs/conf"
 	"github.com/golangcollege/sessions"
 	"github.com/pkg/errors"
+	"github.com/tullo/conf"
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/platform/database"
 	"github.com/tullo/snptx/internal/platform/sec"

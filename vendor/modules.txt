@@ -1,9 +1,6 @@
 # github.com/alexedwards/argon2id v0.0.0-20201228115903-cf543ebc1f7b
 ## explicit
 github.com/alexedwards/argon2id
-# github.com/ardanlabs/conf v1.3.3
-## explicit
-github.com/ardanlabs/conf
 # github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40
 ## explicit
 github.com/bmizerany/pat
@@ -47,6 +44,9 @@ github.com/lib/pq/scram
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
+# github.com/tullo/conf v1.3.6
+## explicit
+github.com/tullo/conf
 # go.opencensus.io v0.22.5
 ## explicit
 go.opencensus.io

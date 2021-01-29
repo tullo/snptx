@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/ardanlabs/conf"
 	"github.com/pkg/errors"
+	"github.com/tullo/conf"
 	"github.com/tullo/snptx/internal/platform/database"
 	"github.com/tullo/snptx/internal/schema"
 )
