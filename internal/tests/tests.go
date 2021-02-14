@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	dbImage = "postgres:13.1-alpine"
+	dbImage = "postgres:13.2-alpine"
 	dbPort  = "5432"
 	dbArgs  = []string{
 		"-e", "POSTGRES_USER=postgres",

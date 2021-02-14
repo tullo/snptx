@@ -10,7 +10,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
-    image: postgres:13.1-alpine
+    image: postgres:13.2-alpine
     networks:
       shared-network: null
     ports:

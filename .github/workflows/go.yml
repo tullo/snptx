@@ -44,7 +44,7 @@ jobs:
 
     - name: Run tests
       run: |
-        docker pull postgres:13.1-alpine
+        docker pull postgres:13.2-alpine
         bash ./ci/test.sh
 
     - name: Upload coverage
