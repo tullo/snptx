@@ -16,6 +16,8 @@ all: docker-build-image go-test-coverage-profile go-tool-cover-text staticcheck
 
 run: compose-db-up go-seed go-run
 
+down: compose-down
+
 go-deps-upgrade:
 	@go get -d -t -u -v ./...
 #   -d flag ...download the source code needed to build ...
@@ -110,7 +112,7 @@ compose-up: docker-build-image
 	@docker-compose exec snptx /app/admin seed
 
 compose-down:
-	@docker-compose down
+	@docker-compose down -v
 
 compose-db-up:
 	@docker-compose up --detach --remove-orphans db
