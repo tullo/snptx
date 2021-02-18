@@ -1,4 +1,4 @@
-FROM golang:1.15.8-alpine3.13 as build_stage
+FROM golang:1.16.0-alpine3.13 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 
@@ -23,7 +23,7 @@ RUN go build
 
 # Build the service binary.
 WORKDIR /app/cmd/snptx
-RUN go build -ldflags "-X main.build=${VCS_REF}"
+RUN go build -ldflags "-X main.build=${VCS_REF}" -mod=vendor
 # The linker sets 'var build' in main.go to the specified git revision
 # See https://golang.org/cmd/link/ for supported linker flags
 
