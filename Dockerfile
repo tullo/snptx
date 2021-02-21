@@ -19,7 +19,7 @@ COPY vendor vendor
 
 # Build the admin tool so we can have it in the image.
 WORKDIR /app/cmd/snptx-admin
-RUN go build
+RUN go build -mod=vendor
 
 # Build the service binary.
 WORKDIR /app/cmd/snptx

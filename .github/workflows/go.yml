@@ -39,8 +39,8 @@ jobs:
 
     - name: Build binaries using vendored deps
       run: |
-        go build ./cmd/snptx-admin
-        go build ./cmd/snptx
+        go build -mod=vendor ./cmd/snptx-admin
+        go build -mod=vendor ./cmd/snptx
 
     - name: Run tests
       run: |
