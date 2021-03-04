@@ -1,8 +1,11 @@
+// +build go1.16
+
 package main
 
 import (
 	"context"
 	"crypto/tls"
+	"embed"
 	"encoding/base64"
 	"fmt"
 	"html/template"
@@ -25,6 +28,9 @@ import (
 
 // build is the git version of this application. It is set using build flags in the makefile.
 var build = "develop"
+
+//go:embed ui
+var webUI embed.FS
 
 // the key must be unexported type to avoid collisions
 type contextKey string
@@ -159,9 +165,9 @@ func run(log *log.Logger) error {
 	}
 
 	// initialize template cache
-	templateCache, err := newTemplateCache("./ui/html/")
+	templateCache, err := newTemplateCache("ui/html")
 	if err != nil {
-		return err
+		return errors.Wrap(err, "creating template cache")
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(cfg.Web.SessionSecret)

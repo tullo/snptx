@@ -37,7 +37,15 @@ func (a *app) routes() http.Handler {
 
 	mux.Get("/ping", http.HandlerFunc(ping))
 
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	fs := &Embed{
+		FS:  webUI,
+		Dir: "ui/static",
+	}
+	static, err := fs.Sub()
+	if err != nil {
+		panic(err.Error())
+	}
+	fileServer := http.FileServer(http.FS(static))
 	mux.Get("/static/", http.StripPrefix("/static", fileServer))
 
 	// Flow of control (reading from left to right):

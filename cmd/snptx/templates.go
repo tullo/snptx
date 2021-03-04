@@ -1,10 +1,15 @@
+// +build go1.16
+
 package main
 
 import (
 	"html/template"
+	"io/fs"
+	"path"
 	"path/filepath"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/forms"
 	"github.com/tullo/snptx/internal/snippet"
 	"github.com/tullo/snptx/internal/user"
@@ -47,10 +52,30 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 
 	cache := map[string]*template.Template{}
 
-	// slice of filepaths with the extension '.page.tmpl'
-	pages, err := filepath.Glob(filepath.Join(dir, "*.page.tmpl"))
+	html := &Embed{
+		FS:  webUI,
+		Dir: dir,
+	}
+
+	uifs, err := html.Sub()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "creating embed file system")
+	}
+
+	files, err := fs.ReadDir(uifs, ".")
+	if err != nil {
+		return nil, errors.Wrap(err, "reading directory from embed fs")
+	}
+
+	var pages []string
+
+	for i := range files {
+		if files[i].IsDir() {
+			continue
+		}
+		if ok, _ := path.Match("*.page.tmpl", files[i].Name()); ok {
+			pages = append(pages, files[i].Name())
+		}
 	}
 
 	for _, page := range pages {
@@ -59,19 +84,19 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 		name := filepath.Base(page)
 
 		// parse the page template file in to a template set
-		ts, err := template.New(name).Funcs(functions).ParseFiles(page)
+		ts, err := template.New(name).Funcs(functions).ParseFS(uifs, page)
 		if err != nil {
 			return nil, err
 		}
 
 		// add any 'layout' templates to the template set
-		ts, err = ts.ParseGlob(filepath.Join(dir, "*.layout.tmpl"))
+		ts, err = ts.ParseFS(uifs, "*.layout.tmpl")
 		if err != nil {
 			return nil, err
 		}
 
 		// add any 'partial' templates to the template set
-		ts, err = ts.ParseGlob(filepath.Join(dir, "*.partial.tmpl"))
+		ts, err = ts.ParseFS(uifs, "*.partial.tmpl")
 		if err != nil {
 			return nil, err
 		}
