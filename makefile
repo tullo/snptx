@@ -138,17 +138,12 @@ deps-cleancache:
 	@go clean -modcache
 
 staticcheck:
-	$(shell go env GOPATH)/bin/staticcheck -go 1.15 -tests ./...
+	@$$(go env GOPATH)/bin/staticcheck -go 1.16 -tests ./cmd/... ./internal/...
 
+staticcheck-install: GO111MODULE := on
 staticcheck-install:
-	set -e ; \
-	git clone git@github.com:dominikh/go-tools.git /tmp/go-tools ; \
-	cd /tmp/go-tools ; \
-	git checkout 2020.2.1 ; \
-	go get ./...; \
-	go install ./... ; \
-	rm -fr /tmp/go-tools
-	$(shell go env GOPATH)/bin/staticcheck -debug.version
+	@go install honnef.co/go/tools/cmd/staticcheck@v0.1.2
+	@$$(go env GOPATH)/bin/staticcheck -debug.version
 
 mkcert-install:
 	@echo make sure libnss3-tools is installed \"apt install libnss3-tools\"
