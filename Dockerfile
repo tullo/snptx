@@ -1,4 +1,4 @@
-FROM golang:1.16.0-alpine3.13 as build_stage
+FROM golang:1.16.4-alpine3.13 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 
@@ -14,7 +14,6 @@ COPY go.* ./
 COPY cmd cmd
 COPY internal internal
 COPY tls tls
-COPY ui ui
 COPY vendor vendor
 
 # Build the admin tool so we can have it in the image.
@@ -36,7 +35,6 @@ RUN addgroup -g 3000 -S app && adduser -u 100000 -S app -G app --no-create-home 
 USER 100000
 COPY --from=build_stage --chown=app:app /app/cmd/snptx-admin/snptx-admin /app/admin
 COPY --from=build_stage --chown=app:app /app/cmd/snptx/snptx /app/main
-COPY --from=build_stage --chown=app:app /app/ui /app/ui
 COPY --from=build_stage --chown=app:app /app/tls /app/tls
 WORKDIR /app
 CMD ["/app/main"]
