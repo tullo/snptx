@@ -1,7 +1,7 @@
-# github.com/alexedwards/argon2id v0.0.0-20201228115903-cf543ebc1f7b
+# github.com/alexedwards/argon2id v0.0.0-20210511081203-7d35d68092b8
 ## explicit
 github.com/alexedwards/argon2id
-# github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40
+# github.com/bmizerany/pat v0.0.0-20210406213842-e4b6760bdd6f
 ## explicit
 github.com/bmizerany/pat
 # github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
@@ -10,12 +10,13 @@ github.com/dgrijalva/jwt-go/v4
 # github.com/dimiro1/darwin v0.0.0-20191008194338-370f81775d3b
 ## explicit
 github.com/dimiro1/darwin
-# github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
+# github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
+## explicit
 github.com/golang/groupcache/lru
 # github.com/golangcollege/sessions v1.2.0
 ## explicit
 github.com/golangcollege/sessions
-# github.com/google/go-cmp v0.5.4
+# github.com/google/go-cmp v0.5.5
 ## explicit
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
@@ -25,7 +26,7 @@ github.com/google/go-cmp/cmp/internal/value
 # github.com/google/uuid v1.2.0
 ## explicit
 github.com/google/uuid
-# github.com/jmoiron/sqlx v1.3.1
+# github.com/jmoiron/sqlx v1.3.3
 ## explicit
 github.com/jmoiron/sqlx
 github.com/jmoiron/sqlx/reflectx
@@ -35,7 +36,7 @@ github.com/justinas/alice
 # github.com/justinas/nosurf v1.1.1
 ## explicit
 github.com/justinas/nosurf
-# github.com/lib/pq v1.9.0
+# github.com/lib/pq v1.10.1
 ## explicit
 github.com/lib/pq
 github.com/lib/pq/oid
@@ -43,23 +44,24 @@ github.com/lib/pq/scram
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/tullo/conf v1.3.6
+# github.com/tullo/conf v1.3.7
 ## explicit
 github.com/tullo/conf
-# go.opencensus.io v0.22.6
+# go.opencensus.io v0.23.0
 ## explicit
 go.opencensus.io
 go.opencensus.io/internal
 go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
+# golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
+## explicit
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20/salsa
-# golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c
+# golang.org/x/sys v0.0.0-20210511113859-b0526f3d8744
 ## explicit
 golang.org/x/sys/cpu
