@@ -19,19 +19,19 @@ var (
 	ErrInvalidID = errors.New("ID is not in its proper form")
 )
 
-// Snippet manages the set of API's for snippet access. It wraps a sql.DB
+// Store manages the set of API's for snippet access. It wraps a sql.DB
 // connection pool.
-type Snippet struct {
+type Store struct {
 	db *sqlx.DB
 }
 
 // New constructs a Snippet for api access.
-func New(db *sqlx.DB) Snippet {
-	return Snippet{db: db}
+func New(db *sqlx.DB) Store {
+	return Store{db: db}
 }
 
 // Create inserts a new snippet record into the database.
-func (s Snippet) Create(ctx context.Context, n NewSnippet, now time.Time) (*Info, error) {
+func (s Store) Create(ctx context.Context, n NewSnippet, now time.Time) (*Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Create")
 	defer span.End()
 
@@ -58,7 +58,7 @@ func (s Snippet) Create(ctx context.Context, n NewSnippet, now time.Time) (*Info
 }
 
 // Retrieve gets the specified snippet from the database.
-func (s Snippet) Retrieve(ctx context.Context, id string) (*Info, error) {
+func (s Store) Retrieve(ctx context.Context, id string) (*Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Retrieve")
 	defer span.End()
 
@@ -80,7 +80,7 @@ func (s Snippet) Retrieve(ctx context.Context, id string) (*Info, error) {
 }
 
 // Update updates a snippet record in the database.
-func (s Snippet) Update(ctx context.Context, id string, upd UpdateSnippet, now time.Time) error {
+func (s Store) Update(ctx context.Context, id string, upd UpdateSnippet, now time.Time) error {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Update")
 	defer span.End()
 
@@ -116,7 +116,7 @@ func (s Snippet) Update(ctx context.Context, id string, upd UpdateSnippet, now t
 }
 
 // Delete removes a snippet record from the database.
-func (s Snippet) Delete(ctx context.Context, id string) error {
+func (s Store) Delete(ctx context.Context, id string) error {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Delete")
 	defer span.End()
 
@@ -134,7 +134,7 @@ func (s Snippet) Delete(ctx context.Context, id string) error {
 }
 
 // Latest gets the latest snippets from the database.
-func (s Snippet) Latest(ctx context.Context) ([]Info, error) {
+func (s Store) Latest(ctx context.Context) ([]Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Latest")
 	defer span.End()
 

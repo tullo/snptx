@@ -39,25 +39,26 @@ var (
 	ErrDuplicateEmail = errors.New("models: duplicate email")
 )
 
-// User manages the set of API's for user access. It wraps a sql.DB connection pool.
-type User struct {
+// Store manages the set of API's for user access. It wraps a sql.DB connection
+// pool and Argon2 parameters.
+type Store struct {
 	db *sqlx.DB
 	hp *argon2id.Params
 }
 
 // New constructs a User for api access.
-func New(db *sqlx.DB, hp *argon2id.Params) User {
-	return User{db: db, hp: hp}
+func New(db *sqlx.DB, hp *argon2id.Params) Store {
+	return Store{db: db, hp: hp}
 }
 
 // List retrieves a list of existing users from the database.
-func (u User) List(ctx context.Context) ([]Info, error) {
+func (s Store) List(ctx context.Context) ([]Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.user.List")
 	defer span.End()
 
 	users := []Info{}
 	const q = `SELECT * FROM users`
-	if err := sqlscan.Select(ctx, u.db, &users, q); err != nil {
+	if err := sqlscan.Select(ctx, s.db, &users, q); err != nil {
 		return nil, errors.Wrap(err, "selecting users")
 	}
 
@@ -65,11 +66,11 @@ func (u User) List(ctx context.Context) ([]Info, error) {
 }
 
 // Create inserts a new user into the database.
-func (u User) Create(ctx context.Context, n NewUser, now time.Time) (*Info, error) {
+func (s Store) Create(ctx context.Context, n NewUser, now time.Time) (*Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.user.Create")
 	defer span.End()
 
-	hash, err := argon2id.CreateHash(n.Password, u.hp)
+	hash, err := argon2id.CreateHash(n.Password, s.hp)
 	if err != nil {
 		return nil, errors.Wrap(err, "generating password hash")
 	}
@@ -88,13 +89,14 @@ func (u User) Create(ctx context.Context, n NewUser, now time.Time) (*Info, erro
 	const q = `INSERT INTO users
 		(user_id, name, email, active, password_hash, roles, date_created, date_updated)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	if _, err = u.db.ExecContext(ctx, q, usr.ID, usr.Name, usr.Email, usr.Active,
+	if _, err = s.db.ExecContext(ctx, q, usr.ID, usr.Name, usr.Email, usr.Active,
 		usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			if pqErr.Code.Name() == "unique_violation" {
 				return nil, ErrDuplicateEmail
 			}
 		}
+
 		return nil, err
 	}
 
@@ -102,7 +104,7 @@ func (u User) Create(ctx context.Context, n NewUser, now time.Time) (*Info, erro
 }
 
 // QueryByID gets the specified user from the database.
-func (u User) QueryByID(ctx context.Context, id string) (*Info, error) {
+func (s Store) QueryByID(ctx context.Context, id string) (*Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.user.Retrieve")
 	defer span.End()
 
@@ -112,7 +114,7 @@ func (u User) QueryByID(ctx context.Context, id string) (*Info, error) {
 
 	var usr Info
 	const q = `SELECT * FROM users WHERE user_id = $1`
-	if err := sqlscan.Get(ctx, u.db, &usr, q, id); err != nil {
+	if err := sqlscan.Get(ctx, s.db, &usr, q, id); err != nil {
 		if sqlscan.NotFound(err) {
 			return nil, ErrNotFound
 		}
@@ -124,11 +126,11 @@ func (u User) QueryByID(ctx context.Context, id string) (*Info, error) {
 }
 
 // Update replaces a user document in the database.
-func (u User) Update(ctx context.Context, id string, upd UpdateUser, now time.Time) error {
+func (s Store) Update(ctx context.Context, id string, upd UpdateUser, now time.Time) error {
 	ctx, span := trace.StartSpan(ctx, "internal.user.Update")
 	defer span.End()
 
-	usr, err := u.QueryByID(ctx, id)
+	usr, err := s.QueryByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -143,7 +145,7 @@ func (u User) Update(ctx context.Context, id string, upd UpdateUser, now time.Ti
 		usr.Roles = upd.Roles
 	}
 	if upd.Password != nil {
-		hash, err := argon2id.CreateHash(*upd.Password, u.hp)
+		hash, err := argon2id.CreateHash(*upd.Password, s.hp)
 		if err != nil {
 			return errors.Wrap(err, "generating password hash")
 		}
@@ -159,7 +161,7 @@ func (u User) Update(ctx context.Context, id string, upd UpdateUser, now time.Ti
 		"password_hash" = $5,
 		"date_updated" = $6
 	WHERE user_id = $1`
-	_, err = u.db.ExecContext(ctx, q, id, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated)
+	_, err = s.db.ExecContext(ctx, q, id, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated)
 	if err != nil {
 		return errors.Wrap(err, "updating user")
 	}
@@ -168,7 +170,7 @@ func (u User) Update(ctx context.Context, id string, upd UpdateUser, now time.Ti
 }
 
 // Delete removes a user from the database.
-func (u User) Delete(ctx context.Context, id string) error {
+func (s Store) Delete(ctx context.Context, id string) error {
 	ctx, span := trace.StartSpan(ctx, "internal.user.Delete")
 	defer span.End()
 
@@ -178,7 +180,7 @@ func (u User) Delete(ctx context.Context, id string) error {
 
 	const q = `DELETE FROM users WHERE user_id = $1`
 
-	if _, err := u.db.ExecContext(ctx, q, id); err != nil {
+	if _, err := s.db.ExecContext(ctx, q, id); err != nil {
 		return errors.Wrapf(err, "deleting user %s", id)
 	}
 
@@ -188,15 +190,14 @@ func (u User) Delete(ctx context.Context, id string) error {
 // Authenticate finds a user by their email and verifies their password. On
 // success it returns a Claims value representing this user. The claims can be
 // used to generate a token for future authentication.
-func (u User) Authenticate(ctx context.Context, now time.Time, email, password string) (auth.Claims, error) {
+func (s Store) Authenticate(ctx context.Context, now time.Time, email, password string) (auth.Claims, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.user.Authenticate")
 	defer span.End()
 
 	const q = `SELECT * FROM users WHERE email = $1`
 
 	var usr Info
-	if err := sqlscan.Get(ctx, u.db, &usr, q, email); err != nil {
-
+	if err := sqlscan.Get(ctx, s.db, &usr, q, email); err != nil {
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.
 		if sqlscan.NotFound(err) {
@@ -219,9 +220,8 @@ func (u User) Authenticate(ctx context.Context, now time.Time, email, password s
 }
 
 // ChangePassword generates a hash based on the new password and saves it to the db.
-func (u User) ChangePassword(ctx context.Context, id string, currentPassword, newPassword string) error {
-
-	usr, err := u.QueryByID(ctx, id)
+func (s Store) ChangePassword(ctx context.Context, id string, currentPassword, newPassword string) error {
+	usr, err := s.QueryByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -231,17 +231,19 @@ func (u User) ChangePassword(ctx context.Context, id string, currentPassword, ne
 		if !match {
 			return ErrInvalidCredentials
 		}
+
 		return err
 	}
 
 	// generate hash based on the new password
-	hash, err := argon2id.CreateHash(newPassword, u.hp)
+	hash, err := argon2id.CreateHash(newPassword, s.hp)
 	if err != nil {
 		return errors.Wrap(err, "generating password hash")
 	}
 
 	// persist the new hash
 	stmt := "UPDATE users SET password_hash = $1 WHERE user_id = $2"
-	_, err = u.db.Exec(stmt, hash, id)
+	_, err = s.db.Exec(stmt, hash, id)
+
 	return err
 }
