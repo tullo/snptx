@@ -1,55 +1,36 @@
 package schema
 
 import (
-	"github.com/dimiro1/darwin"
-	"github.com/jmoiron/sqlx"
+	"net/http"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/cockroachdb"
+	"github.com/golang-migrate/migrate/v4/source/httpfs"
+	"github.com/pkg/errors"
 )
 
 // Migrate attempts to bring the schema for db up to date with the migrations
 // defined in this package.
-func Migrate(db *sqlx.DB) error {
-	driver := darwin.NewGenericDriver(db.DB, darwin.PostgresDialect{})
+func Migrate(connString string) error {
+	var c cockroachdb.CockroachDb
+	driver, err := c.Open(connString + "&x-statement-timeout=10000") // 10 seconds
+	if err != nil {
+		return errors.Wrap(err, "migration driver construction")
+	}
 
-	d := darwin.New(driver, migrations, nil)
+	src, err := httpfs.New(http.FS(migrations), "migrations")
+	if err != nil {
+		return errors.Wrap(err, "create migrate source driver")
+	}
 
-	return d.Migrate()
-}
+	mig, err := migrate.NewWithInstance("httpfs", src, "postgres", driver)
+	if err != nil {
+		return errors.Wrap(err, "create migrate instance")
+	}
 
-// migrations contains the queries needed to construct the database schema.
-var migrations = []darwin.Migration{
-	{
-		Version:     1,
-		Description: "Add snippets",
-		Script: `
-		CREATE TABLE snippets (
-			snippet_id 	  UUID,
-			title 		  TEXT,
-			content		  TEXT,
-			date_expires  TIMESTAMP WITH TIME ZONE,
-			date_created  TIMESTAMP WITH TIME ZONE,
-			date_updated  TIMESTAMP WITH TIME ZONE,
-			PRIMARY KEY (snippet_id)
-		);`,
-	},
-	{
-		Version:     2,
-		Description: "Add idx snippets(date_created)",
-		Script:      `CREATE INDEX idx_snippets_created ON snippets(date_created);`,
-	},
-	{
-		Version:     3,
-		Description: "Add users",
-		Script: `
-		CREATE TABLE users (
-			user_id       UUID,
-			name          TEXT,
-			email         TEXT UNIQUE,
-			active		  BOOLEAN DEFAULT TRUE,
-			roles         TEXT[],
-			password_hash TEXT,
-			date_created  TIMESTAMP WITH TIME ZONE,
-			date_updated  TIMESTAMP WITH TIME ZONE,
-			PRIMARY KEY (user_id)
-		);`,
-	},
+	if err = mig.Up(); err != migrate.ErrNoChange {
+		return err
+	}
+
+	return nil
 }

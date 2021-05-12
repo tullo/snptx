@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/georgysavva/scany/sqlscan"
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 	"go.opencensus.io/trace"
 )
@@ -19,14 +19,14 @@ var (
 	ErrInvalidID = errors.New("ID is not in its proper form")
 )
 
-// Store manages the set of API's for snippet access. It wraps a sql.DB
+// Store manages the set of API's for snippet access. It wraps a pgxpool.Pool
 // connection pool.
 type Store struct {
-	db *sqlx.DB
+	db *pgxpool.Pool
 }
 
 // New constructs a Snippet for api access.
-func New(db *sqlx.DB) Store {
+func New(db *pgxpool.Pool) Store {
 	return Store{db: db}
 }
 
@@ -47,7 +47,7 @@ func (s Store) Create(ctx context.Context, n NewSnippet, now time.Time) (*Info, 
 	const q = `INSERT INTO snippets
 	(snippet_id, title, content, date_expires, date_created, date_updated)
 		VALUES ($1, $2, $3, $4, $5, $6)`
-	_, err := s.db.ExecContext(ctx, q,
+	_, err := s.db.Exec(ctx, q,
 		spt.ID, spt.Title, spt.Content, spt.DateExpires, spt.DateCreated, spt.DateUpdated,
 	)
 	if err != nil {
@@ -68,8 +68,8 @@ func (s Store) Retrieve(ctx context.Context, id string) (*Info, error) {
 
 	var spt Info
 	const q = `SELECT * FROM snippets WHERE snippet_id = $1`
-	if err := sqlscan.Get(ctx, s.db, &spt, q, id); err != nil {
-		if sqlscan.NotFound(err) {
+	if err := pgxscan.Get(ctx, s.db, &spt, q, id); err != nil {
+		if pgxscan.NotFound(err) {
 			return nil, ErrNotFound
 		}
 
@@ -107,7 +107,7 @@ func (s Store) Update(ctx context.Context, id string, upd UpdateSnippet, now tim
 		"date_expires" = $4,
 		"date_updated" = $5
 		WHERE snippet_id = $1`
-	_, err = s.db.ExecContext(ctx, q, id, spt.Title, spt.Content, spt.DateExpires, now)
+	_, err = s.db.Exec(ctx, q, id, spt.Title, spt.Content, spt.DateExpires, now)
 	if err != nil {
 		return errors.Wrap(err, "updating snippet")
 	}
@@ -126,7 +126,7 @@ func (s Store) Delete(ctx context.Context, id string) error {
 
 	const q = `DELETE FROM snippets WHERE snippet_id = $1`
 
-	if _, err := s.db.ExecContext(ctx, q, id); err != nil {
+	if _, err := s.db.Exec(ctx, q, id); err != nil {
 		return errors.Wrapf(err, "deleting snippet %s", id)
 	}
 
@@ -143,7 +143,7 @@ func (s Store) Latest(ctx context.Context) ([]Info, error) {
 		WHERE date_expires > NOW()
 		ORDER BY date_created DESC
 		LIMIT 10;`
-	if err := sqlscan.Select(ctx, s.db, &snippets, q); err != nil {
+	if err := pgxscan.Select(ctx, s.db, &snippets, q); err != nil {
 		return nil, errors.Wrap(err, "selecting snippets")
 	}
 

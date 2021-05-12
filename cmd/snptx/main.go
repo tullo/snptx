@@ -97,7 +97,7 @@ func run(log *log.Logger) error {
 		DB struct {
 			User       string `conf:"default:postgres"`
 			Password   string `conf:"default:postgres,noprint"`
-			Host       string `conf:"default:0.0.0.0"`
+			Host       string `conf:"default:0.0.0.0:5432"`
 			Name       string `conf:"default:postgres"`
 			DisableTLS bool   `conf:"default:false"`
 		}
@@ -129,7 +129,7 @@ func run(log *log.Logger) error {
 
 	log.Println("Initializing Database support")
 
-	db, err := database.Open(database.Config{
+	db, err := database.Connect(context.Background(), database.Config{
 		User:       cfg.DB.User,
 		Password:   cfg.DB.Password,
 		Host:       cfg.DB.Host,

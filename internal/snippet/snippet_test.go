@@ -99,10 +99,10 @@ func TestSnippet(t *testing.T) {
 				t.Logf("\t%s\tShould be able to see updates to Content.", tests.Success)
 			}
 
-			if savedS.DateExpires != *upd.DateExpires {
+			if savedS.DateExpires.UTC() != upd.DateExpires.UTC() {
 				t.Errorf("\t%s\tShould be able to see updates to DateExpires.", tests.Failed)
 				t.Log("\t\tGot:", savedS.DateExpires.UTC())
-				t.Log("\t\tExp:", *upd.DateExpires)
+				t.Log("\t\tExp:", upd.DateExpires.UTC())
 			} else {
 				t.Logf("\t%s\tShould be able to see updates to DateExpires.", tests.Success)
 			}

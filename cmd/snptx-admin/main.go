@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/tullo/conf"
@@ -27,7 +29,7 @@ func run() error {
 		DB struct {
 			User       string `conf:"default:postgres"`
 			Password   string `conf:"default:postgres,noprint"`
-			Host       string `conf:"default:0.0.0.0"`
+			Host       string `conf:"default:0.0.0.0:5432"`
 			Name       string `conf:"default:postgres"`
 			DisableTLS bool   `conf:"default:false"`
 		}
@@ -73,29 +75,27 @@ func run() error {
 }
 
 func migrate(cfg database.Config) error {
-	db, err := database.Open(cfg)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	if err := schema.Migrate(db); err != nil {
-
+	if err := schema.Migrate(database.ConnString(cfg)); err != nil {
 		return err
 	}
 
 	fmt.Println("Migrations complete")
+
 	return nil
 }
 
 func seed(cfg database.Config) error {
-	db, err := database.Open(cfg)
+	deadline := time.Now().Add(time.Second * 15)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+
+	db, err := database.Connect(ctx, cfg)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
-	if err := schema.Seed(db); err != nil {
+	if err := schema.Seed(ctx, db); err != nil {
 		return err
 	}
 

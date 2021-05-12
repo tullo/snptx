@@ -1,25 +1,27 @@
 package schema
 
 import (
-	"github.com/jmoiron/sqlx"
+	"context"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 // Seed runs the set of seed-data queries against db. The queries are ran in a
 // transaction and rolled back if any fail.
-func Seed(db *sqlx.DB) error {
-	tx, err := db.Begin()
+func Seed(ctx context.Context, db *pgxpool.Pool) error {
+	tx, err := db.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	if _, err := tx.Exec(seeds); err != nil {
-		if err := tx.Rollback(); err != nil {
+	if _, err := tx.Exec(ctx, seeds); err != nil {
+		if err := tx.Rollback(ctx); err != nil {
 			return err
 		}
 		return err
 	}
 
-	return tx.Commit()
+	return tx.Commit(ctx)
 }
 
 // seeds is a string constant containing all of the queries needed to get the

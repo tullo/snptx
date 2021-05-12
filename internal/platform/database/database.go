@@ -2,10 +2,11 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // The database driver in use.
+	"github.com/georgysavva/scany/pgxscan"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 // Config is the required properties to use the database.
@@ -17,10 +18,18 @@ type Config struct {
 	DisableTLS bool
 }
 
-// Open knows how to open a database connection based on the configuration.
-func Open(cfg Config) (*sqlx.DB, error) {
+// Connect establishes a database connection based on the configuration.
+func Connect(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
+	p, err := pgxpool.Connect(ctx, ConnString(cfg))
+	if err != nil {
+		return nil, fmt.Errorf("database connection error: %w", err)
+	}
 
-	// Define SSL mode.
+	return p, nil
+}
+
+// ConnString translates config to a db connection string.
+func ConnString(cfg Config) string {
 	sslMode := "require"
 	if cfg.DisableTLS {
 		sslMode = "disable"
@@ -31,7 +40,6 @@ func Open(cfg Config) (*sqlx.DB, error) {
 	q.Set("sslmode", sslMode)
 	q.Set("timezone", "utc")
 
-	// Construct url.
 	u := url.URL{
 		Scheme:   "postgres",
 		User:     url.UserPassword(cfg.User, cfg.Password),
@@ -40,17 +48,17 @@ func Open(cfg Config) (*sqlx.DB, error) {
 		RawQuery: q.Encode(),
 	}
 
-	return sqlx.Open("postgres", u.String())
+	return u.String()
 }
 
 // StatusCheck returns nil if it can successfully talk to the database. It
 // returns a non-nil error otherwise.
-func StatusCheck(ctx context.Context, db *sqlx.DB) error {
+func StatusCheck(ctx context.Context, db *pgxpool.Pool) error {
 	// Run a simple query to determine connectivity. The db has a "Ping" method
 	// but it can false-positive when it was previously able to talk to the
 	// database but the database has since gone away. Running this query forces a
 	// round trip to the database.
 	const q = `SELECT true`
 	var tmp bool
-	return db.QueryRowContext(ctx, q).Scan(&tmp)
+	return pgxscan.Get(ctx, db, &tmp, q)
 }

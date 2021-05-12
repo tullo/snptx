@@ -8,13 +8,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/tullo/snptx/internal/platform/database"
 	"github.com/tullo/snptx/internal/platform/database/databasetest"
 	"github.com/tullo/snptx/internal/platform/web"
 	"github.com/tullo/snptx/internal/schema"
-
-	"github.com/jmoiron/sqlx"
 )
 
 // Success and failure markers.
@@ -40,43 +38,43 @@ var (
 //
 // It returns the database to use as well as a function to call at the end of
 // the test.
-func NewUnit(t *testing.T) (*sqlx.DB, func()) {
+func NewUnit(t *testing.T) (*pgxpool.Pool, func()) {
 	t.Helper()
 
-	c := databasetest.StartContainer(t, dbImage, dbPort, dbArgs...)
+	t.Log("waiting for database to be ready")
 
-	db, err := database.Open(database.Config{
+	c := databasetest.StartContainer(t, dbImage, dbPort, dbArgs...)
+	ctx := context.Background()
+	cfg := database.Config{
 		User:       "postgres",
 		Password:   "postgres",
 		Host:       c.Host,
 		Name:       "postgres",
 		DisableTLS: true,
-	})
-	if err != nil {
-		t.Fatalf("opening database connection: %v", err)
 	}
-
-	t.Log("waiting for database to be ready")
 
 	// Wait for the database to be ready. Wait 100ms longer between each attempt.
 	// Do not try more than 20 times.
-	var pingError error
+	var (
+		db  *pgxpool.Pool
+		err error
+	)
 	maxAttempts := 20
 	for attempts := 1; attempts <= maxAttempts; attempts++ {
-		pingError = db.Ping()
-		if pingError == nil {
+		db, err = database.Connect(ctx, cfg)
+		if err == nil {
 			break
 		}
 		time.Sleep(time.Duration(attempts) * 100 * time.Millisecond)
 	}
 
-	if pingError != nil {
+	if err != nil {
 		databasetest.DumpContainerLogs(t, c)
 		databasetest.StopContainer(t, c)
-		t.Fatalf("waiting for database to be ready: %v", pingError)
+		t.Fatalf("opening database connection: %v", err)
 	}
 
-	if err := schema.Migrate(db); err != nil {
+	if err := schema.Migrate(database.ConnString(cfg)); err != nil {
 		databasetest.StopContainer(t, c)
 		t.Fatalf("migrating: %s", err)
 	}
@@ -94,7 +92,7 @@ func NewUnit(t *testing.T) (*sqlx.DB, func()) {
 
 // Test owns state for running and shutting down tests.
 type Test struct {
-	DB      *sqlx.DB
+	DB      *pgxpool.Pool
 	Log     *log.Logger
 	t       *testing.T
 	cleanup func()
@@ -107,7 +105,11 @@ func NewIntegration(t *testing.T) *Test {
 	// Initialize and seed database. Store the cleanup function call later.
 	db, cleanup := NewUnit(t)
 
-	if err := schema.Seed(db); err != nil {
+	deadline := time.Now().Add(time.Second * 15)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+
+	if err := schema.Seed(ctx, db); err != nil {
 		t.Fatal(err)
 	}
 

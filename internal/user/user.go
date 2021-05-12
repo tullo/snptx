@@ -4,15 +4,14 @@ import (
 	"context"
 	"time"
 
-	"go.opencensus.io/trace"
-
 	"github.com/alexedwards/argon2id"
-	"github.com/georgysavva/scany/sqlscan"
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/platform/auth"
+	"go.opencensus.io/trace"
 )
 
 var (
@@ -39,15 +38,15 @@ var (
 	ErrDuplicateEmail = errors.New("models: duplicate email")
 )
 
-// Store manages the set of API's for user access. It wraps a sql.DB connection
-// pool and Argon2 parameters.
+// Store manages the set of API's for user access. It wraps a pgxpool.Pool and
+// Argon2 parameters.
 type Store struct {
-	db *sqlx.DB
+	db *pgxpool.Pool
 	hp *argon2id.Params
 }
 
 // New constructs a User for api access.
-func New(db *sqlx.DB, hp *argon2id.Params) Store {
+func New(db *pgxpool.Pool, hp *argon2id.Params) Store {
 	return Store{db: db, hp: hp}
 }
 
@@ -58,7 +57,7 @@ func (s Store) List(ctx context.Context) ([]Info, error) {
 
 	users := []Info{}
 	const q = `SELECT * FROM users`
-	if err := sqlscan.Select(ctx, s.db, &users, q); err != nil {
+	if err := pgxscan.Select(ctx, s.db, &users, q); err != nil {
 		return nil, errors.Wrap(err, "selecting users")
 	}
 
@@ -89,10 +88,11 @@ func (s Store) Create(ctx context.Context, n NewUser, now time.Time) (*Info, err
 	const q = `INSERT INTO users
 		(user_id, name, email, active, password_hash, roles, date_created, date_updated)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	if _, err = s.db.ExecContext(ctx, q, usr.ID, usr.Name, usr.Email, usr.Active,
+	if _, err = s.db.Exec(ctx, q, usr.ID, usr.Name, usr.Email, usr.Active,
 		usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			if pqErr.Code.Name() == "unique_violation" {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			if pgErr.ConstraintName == "users_email_key" {
+				// violates unique constraint "users_email_key"
 				return nil, ErrDuplicateEmail
 			}
 		}
@@ -114,8 +114,8 @@ func (s Store) QueryByID(ctx context.Context, id string) (*Info, error) {
 
 	var usr Info
 	const q = `SELECT * FROM users WHERE user_id = $1`
-	if err := sqlscan.Get(ctx, s.db, &usr, q, id); err != nil {
-		if sqlscan.NotFound(err) {
+	if err := pgxscan.Get(ctx, s.db, &usr, q, id); err != nil {
+		if pgxscan.NotFound(err) {
 			return nil, ErrNotFound
 		}
 
@@ -161,7 +161,7 @@ func (s Store) Update(ctx context.Context, id string, upd UpdateUser, now time.T
 		"password_hash" = $5,
 		"date_updated" = $6
 	WHERE user_id = $1`
-	_, err = s.db.ExecContext(ctx, q, id, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated)
+	_, err = s.db.Exec(ctx, q, id, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated)
 	if err != nil {
 		return errors.Wrap(err, "updating user")
 	}
@@ -180,7 +180,7 @@ func (s Store) Delete(ctx context.Context, id string) error {
 
 	const q = `DELETE FROM users WHERE user_id = $1`
 
-	if _, err := s.db.ExecContext(ctx, q, id); err != nil {
+	if _, err := s.db.Exec(ctx, q, id); err != nil {
 		return errors.Wrapf(err, "deleting user %s", id)
 	}
 
@@ -197,10 +197,10 @@ func (s Store) Authenticate(ctx context.Context, now time.Time, email, password 
 	const q = `SELECT * FROM users WHERE email = $1`
 
 	var usr Info
-	if err := sqlscan.Get(ctx, s.db, &usr, q, email); err != nil {
+	if err := pgxscan.Get(ctx, s.db, &usr, q, email); err != nil {
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.
-		if sqlscan.NotFound(err) {
+		if pgxscan.NotFound(err) {
 			return auth.Claims{}, ErrAuthenticationFailure
 		}
 
@@ -243,7 +243,7 @@ func (s Store) ChangePassword(ctx context.Context, id string, currentPassword, n
 
 	// persist the new hash
 	stmt := "UPDATE users SET password_hash = $1 WHERE user_id = $2"
-	_, err = s.db.Exec(stmt, hash, id)
+	_, err = s.db.Exec(ctx, stmt, hash, id)
 
 	return err
 }
