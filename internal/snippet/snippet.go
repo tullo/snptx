@@ -2,9 +2,9 @@ package snippet
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
+	"github.com/georgysavva/scany/sqlscan"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -68,8 +68,8 @@ func (s Snippet) Retrieve(ctx context.Context, id string) (*Info, error) {
 
 	var spt Info
 	const q = `SELECT * FROM snippets WHERE snippet_id = $1`
-	if err := s.db.GetContext(ctx, &spt, q, id); err != nil {
-		if err == sql.ErrNoRows {
+	if err := sqlscan.Get(ctx, s.db, &spt, q, id); err != nil {
+		if sqlscan.NotFound(err) {
 			return nil, ErrNotFound
 		}
 
@@ -140,8 +140,10 @@ func (s Snippet) Latest(ctx context.Context) ([]Info, error) {
 
 	snippets := []Info{}
 	const q = `SELECT * FROM snippets
-		WHERE date_expires > NOW() ORDER BY date_created DESC LIMIT 10;`
-	if err := s.db.SelectContext(ctx, &snippets, q); err != nil {
+		WHERE date_expires > NOW()
+		ORDER BY date_created DESC
+		LIMIT 10;`
+	if err := sqlscan.Select(ctx, s.db, &snippets, q); err != nil {
 		return nil, errors.Wrap(err, "selecting snippets")
 	}
 

@@ -2,12 +2,12 @@ package user
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"go.opencensus.io/trace"
 
 	"github.com/alexedwards/argon2id"
+	"github.com/georgysavva/scany/sqlscan"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -57,8 +57,7 @@ func (u User) List(ctx context.Context) ([]Info, error) {
 
 	users := []Info{}
 	const q = `SELECT * FROM users`
-
-	if err := u.db.SelectContext(ctx, &users, q); err != nil {
+	if err := sqlscan.Select(ctx, u.db, &users, q); err != nil {
 		return nil, errors.Wrap(err, "selecting users")
 	}
 
@@ -113,8 +112,8 @@ func (u User) QueryByID(ctx context.Context, id string) (*Info, error) {
 
 	var usr Info
 	const q = `SELECT * FROM users WHERE user_id = $1`
-	if err := u.db.GetContext(ctx, &usr, q, id); err != nil {
-		if err == sql.ErrNoRows {
+	if err := sqlscan.Get(ctx, u.db, &usr, q, id); err != nil {
+		if sqlscan.NotFound(err) {
 			return nil, ErrNotFound
 		}
 
@@ -196,11 +195,11 @@ func (u User) Authenticate(ctx context.Context, now time.Time, email, password s
 	const q = `SELECT * FROM users WHERE email = $1`
 
 	var usr Info
-	if err := u.db.GetContext(ctx, &usr, q, email); err != nil {
+	if err := sqlscan.Get(ctx, u.db, &usr, q, email); err != nil {
 
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.
-		if err == sql.ErrNoRows {
+		if sqlscan.NotFound(err) {
 			return auth.Claims{}, ErrAuthenticationFailure
 		}
 
