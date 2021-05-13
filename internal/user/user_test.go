@@ -112,6 +112,45 @@ func TestUser(t *testing.T) {
 			}
 			t.Logf("\t%s\tShould NOT be able to retrieve user.", tests.Success)
 		}
+
+		t.Log("\tWhen handling multiple Users.")
+		{
+			ctx := tests.Context()
+			now := time.Date(2021, time.May, 13, 0, 0, 0, 0, time.UTC)
+
+			nu := user.NewUser{
+				Name:            "Andreas Amstutz",
+				Email:           "me@amstutz-it.dk",
+				Roles:           []string{auth.RoleAdmin},
+				Password:        "gopher",
+				PasswordConfirm: "gopher",
+			}
+
+			_, err := u.Create(ctx, nu, now)
+			if err != nil {
+				t.Fatalf("\t%s\tShould be able to create user : %s.", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould be able to create user.", tests.Success)
+
+			nu.Email = "user@example.com"
+			nu.Roles = append(nu.Roles, auth.RoleUser)
+			_, err = u.Create(ctx, nu, now)
+			if err != nil {
+				t.Fatalf("\t%s\tShould be able to create user : %s.", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould be able to create user.", tests.Success)
+
+			us, err := u.List(ctx)
+			if err != nil {
+				t.Fatalf("\t%s\tShould be able to list users : %s.", tests.Failed, err)
+			}
+			t.Logf("\t%s\tShould be able to list users.", tests.Success)
+
+			if len(us) != 2 {
+				t.Fatalf("\t%s\tShould get back a list of 2 users. Diff:\n%d", tests.Failed, len(us))
+			}
+			t.Logf("\t%s\tShould get back a list of 2 users.", tests.Success)
+		}
 	}
 }
 
