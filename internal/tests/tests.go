@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -15,7 +17,6 @@ import (
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/tullo/snptx/internal/platform/database"
-	"github.com/tullo/snptx/internal/platform/database/databasetest"
 	"github.com/tullo/snptx/internal/platform/web"
 	"github.com/tullo/snptx/internal/schema"
 )
@@ -48,8 +49,8 @@ func NewPostgresDBSpec() ContainerSpec {
 	return ContainerSpec{
 		Repository: "postgres",
 		Tag:        "13.2-alpine",
-		Port:       "5432",
-		Args:       []string{"-e", "POSTGRES_USER=postgres", "-e", "POSTGRES_PASSWORD=postgres"},
+		Port:       "5432/tcp",
+		Args:       []string{"POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"},
 	}
 }
 
@@ -82,7 +83,7 @@ func NewContainer(pool, repository, tag string, cmd, env []string) (*Container, 
 	}, nil
 }
 
-func (c *Container) TailLogs(ctx context.Context, w io.Writer, follow bool) error {
+func (c *Container) tailLogs(ctx context.Context, w io.Writer, follow bool) error {
 	opts := docker.LogsOptions{
 		Context: ctx,
 
@@ -103,7 +104,7 @@ func (c *Container) TailLogs(ctx context.Context, w io.Writer, follow bool) erro
 // Remove container and linked volumes from docker.
 func removeContainer(t *testing.T, c *Container) {
 	if err := c.pool.Purge(c.resource); err != nil {
-		t.Error("Could not purge container:", err)
+		t.Error("could not remove container:", err)
 	}
 }
 
@@ -128,9 +129,9 @@ func connect(c *Container, cfg database.Config) (*pgxpool.Pool, error) {
 	return db, nil
 }
 
-func containerLog(t *testing.T, c *Container) {
+func dumpContainerLogs(t *testing.T, c *Container) {
 	var buf bytes.Buffer
-	c.TailLogs(context.Background(), &buf, false)
+	c.tailLogs(context.Background(), &buf, false)
 	t.Log(buf.String())
 }
 
@@ -147,45 +148,34 @@ func NewUnit(t *testing.T) (*pgxpool.Pool, func()) {
 
 	t.Log("waiting for database to be ready")
 
-	p := NewPostgresDBSpec()
+	ctr := NewPostgresDBSpec()
 
-	img := bytes.NewBufferString(p.Repository)
-	img.WriteByte(':')
-	img.WriteString(p.Tag)
+	c, err := NewContainer("", ctr.Repository, ctr.Tag, ctr.Cmd, ctr.Args)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	c := databasetest.StartContainer(t, img.String(), p.Port, p.Args...)
-	ctx := context.Background()
+	host := c.resource.Container.NetworkSettings.IPAddress
+	if runtime.GOOS == "darwin" {
+		host = net.JoinHostPort(c.resource.GetBoundIP(ctr.Port), c.resource.GetPort(ctr.Port))
+	}
 	cfg := database.Config{
 		User:       "postgres",
 		Password:   "postgres",
-		Host:       c.Host,
+		Host:       host,
 		Name:       "postgres",
 		DisableTLS: true,
 	}
 
-	// Wait for the database to be ready. Wait 100ms longer between each attempt.
-	// Do not try more than 20 times.
-	var (
-		db  *pgxpool.Pool
-		err error
-	)
-	maxAttempts := 20
-	for attempts := 1; attempts <= maxAttempts; attempts++ {
-		db, err = database.Connect(ctx, cfg)
-		if err == nil {
-			break
-		}
-		time.Sleep(time.Duration(attempts) * 100 * time.Millisecond)
-	}
-
+	db, err := connect(c, cfg)
 	if err != nil {
-		databasetest.DumpContainerLogs(t, c)
-		databasetest.StopContainer(t, c)
+		dumpContainerLogs(t, c)
+		removeContainer(t, c)
 		t.Fatalf("opening database connection: %v", err)
 	}
 
 	if err := schema.Migrate(database.ConnString(cfg)); err != nil {
-		databasetest.StopContainer(t, c)
+		removeContainer(t, c)
 		t.Fatalf("migrating: %s", err)
 	}
 
@@ -194,7 +184,7 @@ func NewUnit(t *testing.T) (*pgxpool.Pool, func()) {
 	teardown := func() {
 		t.Helper()
 		db.Close()
-		databasetest.StopContainer(t, c)
+		removeContainer(t, c)
 	}
 
 	return db, teardown
