@@ -1,16 +1,32 @@
+# github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
+github.com/Azure/go-ansiterm
+github.com/Azure/go-ansiterm/winterm
+# github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
+github.com/Microsoft/go-winio
+github.com/Microsoft/go-winio/pkg/guid
+# github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5
+github.com/Nvveen/Gotty
 # github.com/alexedwards/argon2id v0.0.0-20210511081203-7d35d68092b8
 ## explicit
 github.com/alexedwards/argon2id
 # github.com/bmizerany/pat v0.0.0-20210406213842-e4b6760bdd6f
 ## explicit
 github.com/bmizerany/pat
+# github.com/cenkalti/backoff/v4 v4.1.0
+github.com/cenkalti/backoff/v4
 # github.com/cockroachdb/cockroach-go v0.0.0-20190925194419-606b3d062051
 github.com/cockroachdb/cockroach-go/crdb
+# github.com/containerd/continuity v0.0.0-20190827140505-75bee3e2ccb6
+github.com/containerd/continuity/pathdriver
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 ## explicit
 github.com/dgrijalva/jwt-go/v4
+# github.com/docker/go-connections v0.4.0
+github.com/docker/go-connections/nat
+# github.com/docker/go-units v0.4.0
+github.com/docker/go-units
 # github.com/georgysavva/scany v0.2.8
 ## explicit
 github.com/georgysavva/scany/dbscan
@@ -78,11 +94,48 @@ github.com/justinas/nosurf
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/moby/term v0.0.0-20201216013528-df9cb8a40635
+github.com/moby/term
+github.com/moby/term/windows
+# github.com/opencontainers/go-digest v1.0.0
+github.com/opencontainers/go-digest
+# github.com/opencontainers/image-spec v1.0.1
+github.com/opencontainers/image-spec/specs-go
+github.com/opencontainers/image-spec/specs-go/v1
+# github.com/opencontainers/runc v1.0.0-rc9
+github.com/opencontainers/runc/libcontainer/user
+# github.com/ory/dockertest/v3 v3.6.5
+## explicit
+github.com/ory/dockertest/v3
+github.com/ory/dockertest/v3/docker
+github.com/ory/dockertest/v3/docker/opts
+github.com/ory/dockertest/v3/docker/pkg/archive
+github.com/ory/dockertest/v3/docker/pkg/fileutils
+github.com/ory/dockertest/v3/docker/pkg/homedir
+github.com/ory/dockertest/v3/docker/pkg/idtools
+github.com/ory/dockertest/v3/docker/pkg/ioutils
+github.com/ory/dockertest/v3/docker/pkg/jsonmessage
+github.com/ory/dockertest/v3/docker/pkg/longpath
+github.com/ory/dockertest/v3/docker/pkg/mount
+github.com/ory/dockertest/v3/docker/pkg/pools
+github.com/ory/dockertest/v3/docker/pkg/stdcopy
+github.com/ory/dockertest/v3/docker/pkg/system
+github.com/ory/dockertest/v3/docker/types
+github.com/ory/dockertest/v3/docker/types/blkiodev
+github.com/ory/dockertest/v3/docker/types/container
+github.com/ory/dockertest/v3/docker/types/filters
+github.com/ory/dockertest/v3/docker/types/mount
+github.com/ory/dockertest/v3/docker/types/network
+github.com/ory/dockertest/v3/docker/types/registry
+github.com/ory/dockertest/v3/docker/types/strslice
+github.com/ory/dockertest/v3/docker/types/versions
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
+# github.com/sirupsen/logrus v1.7.0
+github.com/sirupsen/logrus
 # github.com/stretchr/objx v0.2.0
 github.com/stretchr/objx
 # github.com/stretchr/testify v1.6.1
@@ -107,9 +160,14 @@ golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20/salsa
+# golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
+golang.org/x/net/context
 # golang.org/x/sys v0.0.0-20210511113859-b0526f3d8744
 ## explicit
 golang.org/x/sys/cpu
+golang.org/x/sys/internal/unsafeheader
+golang.org/x/sys/unix
+golang.org/x/sys/windows
 # golang.org/x/text v0.3.3
 golang.org/x/text/cases
 golang.org/x/text/internal

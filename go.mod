@@ -17,6 +17,7 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/justinas/nosurf v1.1.1
 	github.com/lib/pq v1.10.1
+	github.com/ory/dockertest/v3 v3.6.5
 	github.com/pkg/errors v0.9.1
 	github.com/tullo/conf v1.3.7
 	go.opencensus.io v0.23.0

@@ -3,6 +3,8 @@ package tests
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"testing"
@@ -10,6 +12,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
 	"github.com/tullo/snptx/internal/platform/database"
 	"github.com/tullo/snptx/internal/platform/database/databasetest"
 	"github.com/tullo/snptx/internal/platform/web"
@@ -47,6 +51,87 @@ func NewPostgresDBSpec() ContainerSpec {
 		Port:       "5432",
 		Args:       []string{"-e", "POSTGRES_USER=postgres", "-e", "POSTGRES_PASSWORD=postgres"},
 	}
+}
+
+type Container struct {
+	pool     *dockertest.Pool
+	resource *dockertest.Resource
+}
+
+func NewContainer(pool, repository, tag string, cmd, env []string) (*Container, error) {
+	p, err := dockertest.NewPool(pool)
+	if err != nil {
+		return nil, fmt.Errorf("could not connect to docker: %w", err)
+	}
+
+	hostConfig := func(hc *docker.HostConfig) {
+		hc.AutoRemove = true // Auto remove stopped container.
+		hc.RestartPolicy = docker.RestartPolicy{Name: "no"}
+	}
+	r, err := p.RunWithOptions(
+		&dockertest.RunOptions{Repository: repository, Tag: tag, Env: env, Cmd: cmd},
+		hostConfig,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("tests: could not start docker container %w", err)
+	}
+
+	return &Container{
+		pool:     p,
+		resource: r,
+	}, nil
+}
+
+func (c *Container) TailLogs(ctx context.Context, w io.Writer, follow bool) error {
+	opts := docker.LogsOptions{
+		Context: ctx,
+
+		Stderr:      true,
+		Stdout:      true,
+		Follow:      follow,
+		Timestamps:  true,
+		RawTerminal: true,
+
+		Container: c.resource.Container.ID,
+
+		OutputStream: w,
+	}
+
+	return c.pool.Client.Logs(opts)
+}
+
+// Remove container and linked volumes from docker.
+func removeContainer(t *testing.T, c *Container) {
+	if err := c.pool.Purge(c.resource); err != nil {
+		t.Error("Could not purge container:", err)
+	}
+}
+
+func connect(c *Container, cfg database.Config) (*pgxpool.Pool, error) {
+	var db *pgxpool.Pool
+	// Connect using exponential backoff-retry.
+	if err := c.pool.Retry(func() error {
+		var (
+			err error
+			ctx = context.Background()
+		)
+		db, err = database.Connect(ctx, cfg)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("could not connect to database: %w", err)
+	}
+
+	return db, nil
+}
+
+func containerLog(t *testing.T, c *Container) {
+	var buf bytes.Buffer
+	c.TailLogs(context.Background(), &buf, false)
+	t.Log(buf.String())
 }
 
 // NewUnit creates a test database inside a Docker container. It creates the
