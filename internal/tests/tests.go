@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"log"
 	"os"
@@ -21,14 +22,32 @@ const (
 	Failed  = "\u2717"
 )
 
-var (
-	dbImage = "postgres:13.2-alpine"
-	dbPort  = "5432"
-	dbArgs  = []string{
-		"-e", "POSTGRES_USER=postgres",
-		"-e", "POSTGRES_PASSWORD=postgres",
+// ContainerSpec provides configuration for a docker container to run.
+type ContainerSpec struct {
+	Repository string
+	Tag        string
+	Port       string
+	Args       []string
+	Cmd        []string
+}
+
+func NewRoachDBSpec() ContainerSpec {
+	return ContainerSpec{
+		Repository: "cockroachdb/cockroach",
+		Tag:        "v20.2.8",
+		Port:       "26257/tcp",
+		Cmd:        []string{"start-single-node", "--insecure", "--listen-addr=0.0.0.0"},
 	}
-)
+}
+
+func NewPostgresDBSpec() ContainerSpec {
+	return ContainerSpec{
+		Repository: "postgres",
+		Tag:        "13.2-alpine",
+		Port:       "5432",
+		Args:       []string{"-e", "POSTGRES_USER=postgres", "-e", "POSTGRES_PASSWORD=postgres"},
+	}
+}
 
 // NewUnit creates a test database inside a Docker container. It creates the
 // required table structure but the database is otherwise empty.
@@ -43,7 +62,13 @@ func NewUnit(t *testing.T) (*pgxpool.Pool, func()) {
 
 	t.Log("waiting for database to be ready")
 
-	c := databasetest.StartContainer(t, dbImage, dbPort, dbArgs...)
+	p := NewPostgresDBSpec()
+
+	img := bytes.NewBufferString(p.Repository)
+	img.WriteByte(':')
+	img.WriteString(p.Tag)
+
+	c := databasetest.StartContainer(t, img.String(), p.Port, p.Args...)
 	ctx := context.Background()
 	cfg := database.Config{
 		User:       "postgres",
