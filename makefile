@@ -104,9 +104,10 @@ compose-config:
 compose-logs:
 	@docker-compose logs -f
 
+compose-up: CMD=/cockroach/cockroach node status --insecure
 compose-up: docker-build-image
 	@docker-compose up -d --remove-orphans
-	@docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
+	@docker-compose exec db sh -c 'until ${CMD}; do { printf '.'; sleep 1; }; done'
 	@docker-compose logs
 	@docker-compose exec snptx /app/admin migrate
 	@docker-compose exec snptx /app/admin seed
@@ -114,10 +115,11 @@ compose-up: docker-build-image
 compose-down:
 	@docker-compose down -v
 
+compose-db-up: CMD=/cockroach/cockroach node status --insecure
 compose-db-up:
 	@docker-compose up --detach --remove-orphans db
 	@echo Waiting for the database to accept connections ...
-	@docker-compose exec db sh -c 'until $$(nc -z localhost 5432); do { printf '.'; sleep 1; }; done'
+	@docker-compose exec db sh -c 'until ${CMD}; do { printf '.'; sleep 1; }; done'
 
 compose-migrate:
 	@docker-compose exec snptx /app/admin migrate

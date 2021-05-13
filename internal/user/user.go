@@ -14,6 +14,9 @@ import (
 	"go.opencensus.io/trace"
 )
 
+// https://www.postgresql.org/docs/current/errcodes-appendix.html
+const uniqueViolation = "23505"
+
 var (
 	// ErrNotFound is used when a specific User is requested but does not exist.
 	ErrNotFound = errors.New("User not found")
@@ -90,8 +93,9 @@ func (s Store) Create(ctx context.Context, n NewUser, now time.Time) (*Info, err
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	if _, err = s.db.Exec(ctx, q, usr.ID, usr.Name, usr.Email, usr.Active,
 		usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			if pgErr.ConstraintName == "users_email_key" {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == uniqueViolation {
 				// violates unique constraint "users_email_key"
 				return nil, ErrDuplicateEmail
 			}

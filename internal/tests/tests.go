@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"runtime"
 	"testing"
 	"time"
 
@@ -148,19 +147,17 @@ func NewUnit(t *testing.T) (*pgxpool.Pool, func()) {
 
 	t.Log("waiting for database to be ready")
 
-	ctr := NewPostgresDBSpec()
+	ctr := NewRoachDBSpec()
 
 	c, err := NewContainer("", ctr.Repository, ctr.Tag, ctr.Cmd, ctr.Args)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	host := c.resource.Container.NetworkSettings.IPAddress
-	if runtime.GOOS == "darwin" {
-		host = net.JoinHostPort(c.resource.GetBoundIP(ctr.Port), c.resource.GetPort(ctr.Port))
-	}
+	// host := c.resource.Container.NetworkSettings.IPAddress
+	host := net.JoinHostPort(c.resource.GetBoundIP(ctr.Port), c.resource.GetPort(ctr.Port))
 	cfg := database.Config{
-		User:       "postgres",
+		User:       "admin",
 		Password:   "postgres",
 		Host:       host,
 		Name:       "postgres",

@@ -43,7 +43,7 @@ jobs:
 
     - name: Run tests
       run: |
-        docker pull postgres:13.2-alpine
+        docker pull cockroachdb/cockroach:v20.2.8
         bash ./ci/test.sh
 
     - name: Upload coverage

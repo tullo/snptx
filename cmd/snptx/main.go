@@ -95,9 +95,9 @@ func run(log *log.Logger) error {
 			ShutdownTimeout time.Duration `conf:"default:5s"`
 		}
 		DB struct {
-			User       string `conf:"default:postgres"`
+			User       string `conf:"default:admin"`
 			Password   string `conf:"default:postgres,noprint"`
-			Host       string `conf:"default:0.0.0.0:5432"`
+			Host       string `conf:"default:0.0.0.0:26257"`
 			Name       string `conf:"default:postgres"`
 			DisableTLS bool   `conf:"default:false"`
 		}

@@ -1,4 +1,5 @@
-version: '3.8'
+# https://github.com/compose-spec/compose-spec/blob/master/spec.md
+version: '3.9' # optional since Compose v1.27.0
 
 networks:
   shared-network:
@@ -7,26 +8,36 @@ networks:
 services:
   db:
     container_name: db
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-    image: postgres:13.2-alpine
+    image: cockroachdb/cockroach:v20.2.8
+    command: start-single-node --insecure --listen-addr=0.0.0.0
+    healthcheck:
+      test: ["CMD", "/cockroach/cockroach", "node", "status", "--insecure"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
     networks:
-      shared-network: null
+      shared-network:
     ports:
-    - published: 5432
-      target: 5432
+    - published: 8080
+      target: 8080
+    - published: 26257
+      target: 26257
+    volumes:
+    - crdb_data:/cockroach/cockroach-data
 
   snptx:
     container_name: snptx
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       ADMIN_DB_DISABLE_TLS: '1'
-      ADMIN_DB_HOST: db
+      ADMIN_DB_HOST: 'db:26257'
       SNPTX_DB_DISABLE_TLS: '1'
-      SNPTX_DB_HOST: db
+      SNPTX_DB_HOST: 'db:26257'
       SNPTX_DB_NAME: postgres
       SNPTX_DB_PASSWORD: postgres
-      SNPTX_DB_USER: postgres
+      SNPTX_DB_USER: admin
       SNPTX_WEB_SESSION_SECRET: ${SESSION_SECRET}
     image: tullo/snptx-amd64:0.1.0
     networks:
@@ -35,3 +46,6 @@ services:
     - published: 4200
       target: 4200
     user: '100000'
+
+volumes:
+  crdb_data: {}
