@@ -21,7 +21,7 @@ func TestSnippet(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
-	s := snippet.New(db)
+	s := snippet.NewStore(db)
 
 	t.Log("Given the need to work with Snippet records.")
 	{

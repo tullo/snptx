@@ -191,8 +191,8 @@ func run(log *log.Logger) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	snippets := snippet.New(db)
-	users := user.New(db, sec.Params(hp))
+	snippets := snippet.NewStore(db)
+	users := user.NewStore(db, sec.Params(hp))
 
 	app := &app{
 		debug:         cfg.Web.DebugMode,

@@ -48,8 +48,8 @@ type Store struct {
 	hp *argon2id.Params
 }
 
-// New constructs a User for api access.
-func New(db *pgxpool.Pool, hp *argon2id.Params) Store {
+// NewStore constructs a Store for api access.
+func NewStore(db *pgxpool.Pool, hp *argon2id.Params) Store {
 	return Store{db: db, hp: hp}
 }
 

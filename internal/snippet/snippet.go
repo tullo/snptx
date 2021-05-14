@@ -25,8 +25,8 @@ type Store struct {
 	db *pgxpool.Pool
 }
 
-// New constructs a Snippet for api access.
-func New(db *pgxpool.Pool) Store {
+// NewStore constructs a Store for api access.
+func NewStore(db *pgxpool.Pool) Store {
 	return Store{db: db}
 }
 

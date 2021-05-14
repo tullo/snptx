@@ -24,7 +24,7 @@ func TestUser(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
-	u := user.New(db, sec.DefaultParams())
+	u := user.NewStore(db, sec.DefaultParams())
 
 	t.Log("Given the need to work with User records.")
 	{
@@ -165,7 +165,7 @@ func TestAuthenticate(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
-	u := user.New(db, sec.DefaultParams())
+	u := user.NewStore(db, sec.DefaultParams())
 
 	t.Log("Given the need to authenticate users")
 	{
@@ -236,7 +236,7 @@ func TestChangePassword(t *testing.T) {
 	db, teardown := tests.NewUnit(t)
 	defer teardown()
 
-	u := user.New(db, sec.DefaultParams())
+	u := user.NewStore(db, sec.DefaultParams())
 
 	t.Log("Given the need to change passwords")
 	{
