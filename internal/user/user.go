@@ -88,11 +88,13 @@ func (s Store) Create(ctx context.Context, n NewUser, now time.Time) (*Info, err
 		DateUpdated:  now.UTC(),
 	}
 
-	const q = `INSERT INTO users
-		(user_id, name, email, active, password_hash, roles, date_created, date_updated)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	if _, err = s.db.Exec(ctx, q, usr.ID, usr.Name, usr.Email, usr.Active,
-		usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
+	const q = `
+	INSERT INTO users
+	  (user_id, name, email, active, password_hash, roles, date_created, date_updated)
+	VALUES
+	  ($1, $2, $3, $4, $5, $6, $7, $8)`
+	if _, err = s.db.Exec(ctx, q,
+		usr.ID, usr.Name, usr.Email, usr.Active, usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == uniqueViolation {
@@ -158,15 +160,15 @@ func (s Store) Update(ctx context.Context, id string, upd UpdateUser, now time.T
 
 	usr.DateUpdated = now
 
-	const q = `UPDATE users SET
-		"name" = $2,
-		"email" = $3,
-		"roles" = $4,
-		"password_hash" = $5,
-		"date_updated" = $6
+	const q = `
+	UPDATE users SET
+	  "name" = $2,
+	  "email" = $3,
+	  "roles" = $4,
+	  "password_hash" = $5,
+	  "date_updated" = $6
 	WHERE user_id = $1`
-	_, err = s.db.Exec(ctx, q, id, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated)
-	if err != nil {
+	if _, err = s.db.Exec(ctx, q, id, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated); err != nil {
 		return errors.Wrap(err, "updating user")
 	}
 
@@ -183,7 +185,6 @@ func (s Store) Delete(ctx context.Context, id string) error {
 	}
 
 	const q = `DELETE FROM users WHERE user_id = $1`
-
 	if _, err := s.db.Exec(ctx, q, id); err != nil {
 		return errors.Wrapf(err, "deleting user %s", id)
 	}
@@ -199,7 +200,6 @@ func (s Store) Authenticate(ctx context.Context, now time.Time, email, password 
 	defer span.End()
 
 	const q = `SELECT * FROM users WHERE email = $1`
-
 	var usr Info
 	if err := pgxscan.Get(ctx, s.db, &usr, q, email); err != nil {
 		// Normally we would return ErrNotFound in this scenario but we do not want

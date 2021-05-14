@@ -44,13 +44,12 @@ func (s Store) Create(ctx context.Context, n NewSnippet, now time.Time) (*Info, 
 		DateUpdated: now,
 	}
 
-	const q = `INSERT INTO snippets
-	(snippet_id, title, content, date_expires, date_created, date_updated)
-		VALUES ($1, $2, $3, $4, $5, $6)`
-	_, err := s.db.Exec(ctx, q,
-		spt.ID, spt.Title, spt.Content, spt.DateExpires, spt.DateCreated, spt.DateUpdated,
-	)
-	if err != nil {
+	const q = `
+	INSERT INTO snippets
+	  (snippet_id, title, content, date_expires, date_created, date_updated)
+	VALUES
+	  ($1, $2, $3, $4, $5, $6)`
+	if _, err := s.db.Exec(ctx, q, spt.ID, spt.Title, spt.Content, spt.DateExpires, spt.DateCreated, spt.DateUpdated); err != nil {
 		return nil, errors.Wrap(err, "inserting snippet")
 	}
 
@@ -101,14 +100,14 @@ func (s Store) Update(ctx context.Context, id string, upd UpdateSnippet, now tim
 
 	spt.DateUpdated = now
 
-	const q = `UPDATE snippets SET
-		"title" = $2,
-		"content" = $3,
-		"date_expires" = $4,
-		"date_updated" = $5
-		WHERE snippet_id = $1`
-	_, err = s.db.Exec(ctx, q, id, spt.Title, spt.Content, spt.DateExpires, now)
-	if err != nil {
+	const q = `
+	UPDATE snippets SET
+	  "title" = $2,
+	  "content" = $3,
+	  "date_expires" = $4,
+	  "date_updated" = $5
+	WHERE snippet_id = $1`
+	if _, err = s.db.Exec(ctx, q, id, spt.Title, spt.Content, spt.DateExpires, now); err != nil {
 		return errors.Wrap(err, "updating snippet")
 	}
 
@@ -125,7 +124,6 @@ func (s Store) Delete(ctx context.Context, id string) error {
 	}
 
 	const q = `DELETE FROM snippets WHERE snippet_id = $1`
-
 	if _, err := s.db.Exec(ctx, q, id); err != nil {
 		return errors.Wrapf(err, "deleting snippet %s", id)
 	}
@@ -139,10 +137,11 @@ func (s Store) Latest(ctx context.Context) ([]Info, error) {
 	defer span.End()
 
 	snippets := []Info{}
-	const q = `SELECT * FROM snippets
-		WHERE date_expires > NOW()
-		ORDER BY date_created DESC
-		LIMIT 10;`
+	const q = `
+	SELECT * FROM snippets
+	WHERE date_expires > NOW()
+	ORDER BY date_created DESC
+	LIMIT 10;`
 	if err := pgxscan.Select(ctx, s.db, &snippets, q); err != nil {
 		return nil, errors.Wrap(err, "selecting snippets")
 	}
