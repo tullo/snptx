@@ -14,10 +14,10 @@ jobs:
     # https://docs.github.com/en/actions/reference/specifications-for-github-hosted-runners
     steps:
 
-    - name: Set up Go 1.16.x
+    - name: Set up Go 1.19.x
       uses: actions/setup-go@v2
       with:
-        go-version: '1.16.4'
+        go-version: '1.19.3'
       id: go
 
     - name: Check out code into the Go module directory
@@ -31,10 +31,10 @@ jobs:
     - name: Run go vet & static checks
       run: |
         go vet ./cmd/... ./internal/...
-        GO111MODULE=on go install honnef.co/go/tools/cmd/staticcheck@v0.1.2
+        GO111MODULE=on go install honnef.co/go/tools/cmd/staticcheck@v0.3.3
         export PATH=$PATH:$(go env GOPATH)/bin
         staticcheck -debug.version
-        staticcheck -go 1.16 -tests ./cmd/... ./internal/...
+        staticcheck -go 1.19 -tests ./cmd/... ./internal/...
 
     - name: Build binaries using vendored deps
       run: |
