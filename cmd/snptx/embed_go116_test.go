@@ -1,3 +1,4 @@
+//go:build go1.16
 // +build go1.16
 
 package main
@@ -31,6 +32,6 @@ func TestEmbedHTMLTemplates(t *testing.T) {
 		if err != nil {
 			t.Error(errors.Wrapf(err, "reading embeded file %s", f.Name()))
 		}
-		t.Log(fmt.Sprintf("%s, (%v) bytes", f.Name(), len(b)))
+		t.Logf(fmt.Sprintf("%s, (%v) bytes", f.Name(), len(b)))
 	}
 }

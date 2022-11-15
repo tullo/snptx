@@ -2,7 +2,7 @@ package main
 
 import (
 	"html"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -57,7 +57,7 @@ func newTestApp(t *testing.T) *app {
 
 	// app struct instantiation using the mocks for the loggers and database models
 	return &app{
-		log:           log.New(ioutil.Discard, "", 0),
+		log:           log.New(io.Discard, "", 0),
 		debug:         false,
 		session:       session,
 		shutdown:      shutdown,
@@ -105,7 +105,7 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, []byt
 	}
 	defer rs.Body.Close()
 
-	body, err := ioutil.ReadAll(rs.Body)
+	body, err := io.ReadAll(rs.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +122,7 @@ func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (i
 	}
 	defer rs.Body.Close()
 
-	body, err := ioutil.ReadAll(rs.Body)
+	body, err := io.ReadAll(rs.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
