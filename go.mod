@@ -12,7 +12,8 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.14.0
-	github.com/jackc/pgx/v4 v4.18.1
+	github.com/jackc/pgx/v4 v4.16.1
+	github.com/jackc/pgx/v5 v5.3.1
 	github.com/justinas/alice v1.2.0
 	github.com/justinas/nosurf v1.1.1
 	github.com/ory/dockertest/v3 v3.9.1
