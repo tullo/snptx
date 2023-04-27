@@ -1,4 +1,4 @@
-FROM golang:1.16.4-alpine3.13 as build_stage
+FROM golang:1.17.3-alpine3.13 as build_stage
 ENV CGO_ENABLED 0
 ARG VCS_REF
 
@@ -28,7 +28,7 @@ RUN go build -ldflags "-X main.build=${VCS_REF}" -mod=vendor
 
 
 # Build production image with Go binaries based on Alpine.
-FROM alpine:3.13.2
+FROM alpine:3.17.3
 ARG BUILD_DATE
 ARG VCS_REF
 RUN addgroup -g 3000 -S app && adduser -u 100000 -S app -G app --no-create-home --disabled-password
