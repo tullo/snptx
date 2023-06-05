@@ -8,7 +8,7 @@ require (
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/georgysavva/scany v1.2.1
 	github.com/georgysavva/scany/v2 v2.0.0
-	github.com/golang-migrate/migrate/v4 v4.16.0
+	github.com/golang-migrate/migrate/v4 v4.16.1
 	github.com/golangcollege/sessions v1.2.0
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
