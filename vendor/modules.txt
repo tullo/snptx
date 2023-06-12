@@ -66,7 +66,7 @@ github.com/georgysavva/scany/pgxscan
 # github.com/gogo/protobuf v1.3.2
 ## explicit; go 1.15
 github.com/gogo/protobuf/proto
-# github.com/golang-migrate/migrate/v4 v4.16.1
+# github.com/golang-migrate/migrate/v4 v4.16.2
 ## explicit; go 1.18
 github.com/golang-migrate/migrate/v4
 github.com/golang-migrate/migrate/v4/database
