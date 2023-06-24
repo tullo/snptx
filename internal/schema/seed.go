@@ -3,7 +3,7 @@ package schema
 import (
 	"context"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Seed runs the set of seed-data queries against db. The queries are ran in a

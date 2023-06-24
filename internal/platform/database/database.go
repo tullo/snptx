@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/georgysavva/scany/pgxscan"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Config is the required properties to use the database.
@@ -20,7 +20,7 @@ type Config struct {
 
 // Connect establishes a database connection based on the configuration.
 func Connect(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
-	p, err := pgxpool.Connect(ctx, ConnString(cfg))
+	p, err := pgxpool.New(ctx, ConnString(cfg))
 	if err != nil {
 		return nil, fmt.Errorf("database connection error: %w", err)
 	}
