@@ -8,7 +8,7 @@ networks:
 services:
   db:
     container_name: db
-    image: cockroachdb/cockroach:v23.1.4
+    image: cockroachdb/cockroach:v23.1.5
     command: start-single-node --insecure --listen-addr=0.0.0.0
     healthcheck:
       test: ["CMD", "/cockroach/cockroach", "node", "status", "--insecure"]
