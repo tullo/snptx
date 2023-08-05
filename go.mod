@@ -12,7 +12,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.14.1
-	github.com/jackc/pgx/v5 v5.4.2
+	github.com/jackc/pgx/v5 v5.4.3
 	github.com/justinas/alice v1.2.0
 	github.com/justinas/nosurf v1.1.1
 	github.com/ory/dockertest/v3 v3.10.0
@@ -43,7 +43,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.2 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/puddle/v2 v2.2.0 // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
