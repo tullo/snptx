@@ -3,7 +3,7 @@ module github.com/tullo/snptx
 go 1.20
 
 require (
-	github.com/alexedwards/argon2id v0.0.0-20230305115115-4b3c3280a736
+	github.com/alexedwards/argon2id v0.0.0-20231016161201-27bf9713919b
 	github.com/bmizerany/pat v0.0.0-20210406213842-e4b6760bdd6f
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/georgysavva/scany/v2 v2.0.0
