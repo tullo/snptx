@@ -6,6 +6,7 @@ export VERSION = 0.1.0
 export DOCKER_BUILDKIT = 1
 export COMPOSE_DOCKER_CLI_BUILD = 1
 export SESSION_SECRET = $(shell openssl rand -base64 32)
+export DATABASE_URL ?= postgresql://root@localhost:26257/snptx?sslmode=disable
 
 .DEFAULT_GOAL := run
 
