@@ -1,20 +1,18 @@
 package tests
 
 import (
-	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
-	"io"
 	"log"
-	"net"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/tullo/snptx/internal/platform/database"
 	"github.com/tullo/snptx/internal/platform/web"
 	"github.com/tullo/snptx/internal/schema"
@@ -26,112 +24,21 @@ const (
 	Failed  = "\u2717"
 )
 
-// ContainerSpec provides configuration for a docker container to run.
-type ContainerSpec struct {
-	Repository string
-	Tag        string
-	Port       string
-	Args       []string
-	Cmd        []string
-}
-
-func NewRoachDBSpec() ContainerSpec {
-	return ContainerSpec{
-		Repository: "cockroachdb/cockroach",
-		Tag:        "v20.2.8",
-		Port:       "26257/tcp",
-		Cmd:        []string{"start-single-node", "--insecure", "--listen-addr=0.0.0.0"},
-	}
-}
-
-func NewPostgresDBSpec() ContainerSpec {
-	return ContainerSpec{
-		Repository: "postgres",
-		Tag:        "13.2-alpine",
-		Port:       "5432/tcp",
-		Args:       []string{"POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres"},
-	}
-}
-
-type Container struct {
-	pool     *dockertest.Pool
-	resource *dockertest.Resource
-}
-
-func NewContainer(pool, repository, tag string, cmd, env []string) (*Container, error) {
-	p, err := dockertest.NewPool(pool)
+func createDatabase(ctx context.Context, pool *database.DB, name string) error {
+	_, err := pool.Exec(ctx, `CREATE DATABASE `+database.SanitizeDatabaseName(name)+`;`)
 	if err != nil {
-		return nil, fmt.Errorf("could not connect to docker: %w", err)
-	}
-
-	hostConfig := func(hc *docker.HostConfig) {
-		hc.AutoRemove = true // Auto remove stopped container.
-		hc.RestartPolicy = docker.RestartPolicy{Name: "no"}
-	}
-	r, err := p.RunWithOptions(
-		&dockertest.RunOptions{Repository: repository, Tag: tag, Env: env, Cmd: cmd},
-		hostConfig,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("tests: could not start docker container %w", err)
-	}
-
-	return &Container{
-		pool:     p,
-		resource: r,
-	}, nil
-}
-
-func (c *Container) tailLogs(ctx context.Context, w io.Writer, follow bool) error {
-	opts := docker.LogsOptions{
-		Context: ctx,
-
-		Stderr:      true,
-		Stdout:      true,
-		Follow:      follow,
-		Timestamps:  true,
-		RawTerminal: true,
-
-		Container: c.resource.Container.ID,
-
-		OutputStream: w,
-	}
-
-	return c.pool.Client.Logs(opts)
-}
-
-// Remove container and linked volumes from docker.
-func removeContainer(t *testing.T, c *Container) {
-	if err := c.pool.Purge(c.resource); err != nil {
-		t.Error("could not remove container:", err)
-	}
-}
-
-func connect(c *Container, cfg database.Config) (*pgxpool.Pool, error) {
-	var db *pgxpool.Pool
-	// Connect using exponential backoff-retry.
-	if err := c.pool.Retry(func() error {
-		var (
-			err error
-			ctx = context.Background()
-		)
-		db, err = database.Connect(ctx, cfg)
-		if err != nil {
-			return err
+		if strings.Contains(err.Error(), "already exists") {
+			return nil
 		}
-
-		return nil
-	}); err != nil {
-		return nil, fmt.Errorf("could not connect to database: %w", err)
 	}
 
-	return db, nil
+	return err
 }
 
-func dumpContainerLogs(t *testing.T, c *Container) {
-	var buf bytes.Buffer
-	c.tailLogs(context.Background(), &buf, false)
-	t.Log(buf.String())
+// dropDatabase drops the specific database.
+func dropDatabase(ctx context.Context, pool *database.DB, name string) error {
+	_, err := pool.Exec(ctx, `DROP DATABASE `+database.SanitizeDatabaseName(name)+`;`)
+	return err
 }
 
 // NewUnit creates a test database inside a Docker container. It creates the
@@ -142,46 +49,55 @@ func dumpContainerLogs(t *testing.T, c *Container) {
 //
 // It returns the database to use as well as a function to call at the end of
 // the test.
-func NewUnit(t *testing.T) (*pgxpool.Pool, func()) {
+func NewUnit(t *testing.T, ctx context.Context) (*pgxpool.Pool, func()) {
 	t.Helper()
 
 	t.Log("waiting for database to be ready")
 
-	ctr := NewRoachDBSpec()
+	dbaddr, ok := os.LookupEnv("DATABASE_URL")
+	if !ok {
+		t.Fatal("database url not defined")
+	}
+	maindb, err := database.ConnectWithURI(ctx, dbaddr)
+	if err != nil {
+		t.Fatal(fmt.Errorf("database connection error: %w", err))
+	}
 
-	c, err := NewContainer("", ctr.Repository, ctr.Tag, ctr.Cmd, ctr.Args)
+	// Create a unique database name so that our parallel tests don't clash.
+	var id [8]byte
+	rand.Read(id[:])
+	uniqueName := t.Name() + "/" + hex.EncodeToString(id[:])
+
+	err = createDatabase(ctx, maindb, uniqueName)
+	if err != nil {
+		t.Fatal(fmt.Errorf("database creation error: %w", err))
+	}
+
+	// Modify the connection string to use a different database.
+	connstr, err := database.ConnstrWithDatabase(dbaddr, uniqueName)
+	if err != nil {
+		t.Fatal(fmt.Errorf("failed to modify connnection string: %w", err))
+	}
+
+	db, err := database.ConnectWithURI(ctx, connstr)
+	if err != nil {
+		t.Fatal(fmt.Errorf("database connection error: %w", err))
+	}
+
+	err = schema.Migrate(connstr)
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	// host := c.resource.Container.NetworkSettings.IPAddress
-	host := net.JoinHostPort(c.resource.GetBoundIP(ctr.Port), c.resource.GetPort(ctr.Port))
-	cfg := database.Config{
-		User:       "admin",
-		Password:   "postgres",
-		Host:       host,
-		Name:       "postgres",
-		DisableTLS: true,
-	}
-
-	db, err := connect(c, cfg)
-	if err != nil {
-		dumpContainerLogs(t, c)
-		removeContainer(t, c)
-		t.Fatalf("opening database connection: %v", err)
-	}
-
-	if err := schema.Migrate(database.ConnString(cfg)); err != nil {
-		removeContainer(t, c)
-		t.Fatalf("migrating: %s", err)
 	}
 
 	// teardown is the function that should be invoked when the caller is done
 	// with the database.
 	teardown := func() {
 		t.Helper()
+		err = dropDatabase(context.TODO(), maindb, uniqueName)
+		if err != nil {
+			t.Fatal(fmt.Errorf("database deletetion error: %w", err))
+		}
 		db.Close()
-		removeContainer(t, c)
 	}
 
 	return db, teardown
@@ -199,12 +115,12 @@ type Test struct {
 func NewIntegration(t *testing.T) *Test {
 	t.Helper()
 
-	// Initialize and seed database. Store the cleanup function call later.
-	db, cleanup := NewUnit(t)
-
-	deadline := time.Now().Add(time.Second * 15)
+	deadline := time.Now().Add(time.Second * 30)
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	defer cancel()
+
+	// Initialize and seed database. Store the cleanup function call later.
+	db, cleanup := NewUnit(t, ctx)
 
 	if err := schema.Seed(ctx, db); err != nil {
 		t.Fatal(err)
