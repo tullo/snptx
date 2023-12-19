@@ -44,15 +44,16 @@ jobs:
     - name: Start a single CockroachDB instance (v23.1.13) with docker
       run: |
         docker pull cockroachdb/cockroach:v23.1.13
-        docker run -d -p 26257:26257 cockroachdb/cockroach:v23.1.13 start-single-node --insecure --advertise-addr=localhost
+        docker run --name roach -d -p 26257:26257 cockroachdb/cockroach:v23.1.13 start-single-node --insecure --advertise-addr=localhost
         sudo apt-get update && sudo apt-get install wait-for-it --yes --no-show-upgraded
         wait-for-it -h localhost -p 26257
+        docker exec roach bash -c "echo 'CREATE DATABASE snptx;' | cockroach sql --insecure"
 
     - name: Run tests
       run: |
         ./ci/test.sh
       env:
-        DATABASE_URL: postgresql://root@localhost:26257/service?sslmode=disable
+        DATABASE_URL: postgresql://root@localhost:26257/snptx?sslmode=disable
         
     - name: Upload coverage
       uses: codecov/codecov-action@v3.1.4
