@@ -43,7 +43,7 @@ jobs:
 
     - name: Run tests
       run: |
-        docker pull cockroachdb/cockroach:v20.2.8
+        docker pull cockroachdb/cockroach:v23.1.13
         bash ./ci/test.sh
 
     - name: Upload coverage
