@@ -47,6 +47,6 @@ jobs:
         bash ./ci/test.sh
 
     - name: Upload coverage
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v3.1.4
       with:
         file: coverprofile.cov
