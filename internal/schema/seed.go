@@ -3,12 +3,12 @@ package schema
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/tullo/snptx/internal/platform/database"
 )
 
 // Seed runs the set of seed-data queries against db. The queries are ran in a
 // transaction and rolled back if any fail.
-func Seed(ctx context.Context, db *pgxpool.Pool) error {
+func Seed(ctx context.Context, db *database.DB) error {
 	tx, err := db.Begin(ctx)
 	if err != nil {
 		return err

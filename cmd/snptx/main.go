@@ -1,3 +1,4 @@
+//go:build go1.16
 // +build go1.16
 
 package main
@@ -129,7 +130,7 @@ func run(log *log.Logger) error {
 
 	log.Println("Initializing Database support")
 
-	db, err := database.Connect(context.Background(), database.Config{
+	pool, err := database.Connect(context.Background(), database.Config{
 		User:       cfg.DB.User,
 		Password:   cfg.DB.Password,
 		Host:       cfg.DB.Host,
@@ -141,7 +142,7 @@ func run(log *log.Logger) error {
 	}
 	defer func() {
 		log.Printf("Database Stopping : %s", cfg.DB.Host)
-		db.Close()
+		pool.Close()
 	}()
 
 	// =========================================================================
@@ -191,8 +192,9 @@ func run(log *log.Logger) error {
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
-	snippets := snippet.NewStore(db)
-	users := user.NewStore(db, sec.Params(hp))
+	db := database.DB{Pool: pool}
+	snippets := snippet.NewStore(&db)
+	users := user.NewStore(&db, sec.Params(hp))
 
 	app := &app{
 		debug:         cfg.Web.DebugMode,

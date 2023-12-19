@@ -6,8 +6,8 @@ import (
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
+	"github.com/tullo/snptx/internal/platform/database"
 	"go.opencensus.io/trace"
 )
 
@@ -22,11 +22,11 @@ var (
 // Store manages the set of API's for snippet access. It wraps a pgxpool.Pool
 // connection pool.
 type Store struct {
-	db *pgxpool.Pool
+	db *database.DB
 }
 
 // NewStore constructs a Store for api access.
-func NewStore(db *pgxpool.Pool) Store {
+func NewStore(db *database.DB) Store {
 	return Store{db: db}
 }
 

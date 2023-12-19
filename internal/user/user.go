@@ -8,9 +8,9 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/platform/auth"
+	"github.com/tullo/snptx/internal/platform/database"
 	"go.opencensus.io/trace"
 )
 
@@ -44,12 +44,12 @@ var (
 // Store manages the set of API's for user access. It wraps a pgxpool.Pool and
 // Argon2 parameters.
 type Store struct {
-	db *pgxpool.Pool
+	db *database.DB
 	hp *argon2id.Params
 }
 
 // NewStore constructs a Store for api access.
-func NewStore(db *pgxpool.Pool, hp *argon2id.Params) Store {
+func NewStore(db *database.DB, hp *argon2id.Params) Store {
 	return Store{db: db, hp: hp}
 }
 

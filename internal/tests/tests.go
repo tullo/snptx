@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/tullo/snptx/internal/platform/database"
 	"github.com/tullo/snptx/internal/platform/web"
 	"github.com/tullo/snptx/internal/schema"
@@ -49,7 +48,7 @@ func dropDatabase(ctx context.Context, pool *database.DB, name string) error {
 //
 // It returns the database to use as well as a function to call at the end of
 // the test.
-func NewUnit(t *testing.T, ctx context.Context) (*pgxpool.Pool, func()) {
+func NewUnit(t *testing.T, ctx context.Context) (*database.DB, func()) {
 	t.Helper()
 
 	t.Log("waiting for database to be ready")
@@ -105,7 +104,7 @@ func NewUnit(t *testing.T, ctx context.Context) (*pgxpool.Pool, func()) {
 
 // Test owns state for running and shutting down tests.
 type Test struct {
-	DB      *pgxpool.Pool
+	DB      *database.DB
 	Log     *log.Logger
 	t       *testing.T
 	cleanup func()
@@ -115,7 +114,7 @@ type Test struct {
 func NewIntegration(t *testing.T) *Test {
 	t.Helper()
 
-	deadline := time.Now().Add(time.Second * 30)
+	deadline := time.Now().Add(time.Second * 15)
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	defer cancel()
 

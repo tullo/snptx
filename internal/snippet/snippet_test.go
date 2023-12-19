@@ -1,6 +1,7 @@
 package snippet_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -18,7 +19,11 @@ func TestSnippet(t *testing.T) {
 		t.Skip("database: skipping integration test")
 	}
 
-	db, teardown := tests.NewUnit(t)
+	deadline := time.Now().Add(time.Second * 15)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+
+	db, teardown := tests.NewUnit(t, ctx)
 	defer teardown()
 
 	s := snippet.NewStore(db)

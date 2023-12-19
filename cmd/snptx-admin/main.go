@@ -89,13 +89,14 @@ func seed(cfg database.Config) error {
 	ctx, cancel := context.WithDeadline(context.Background(), deadline)
 	defer cancel()
 
-	db, err := database.Connect(ctx, cfg)
+	pool, err := database.Connect(ctx, cfg)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer pool.Close()
 
-	if err := schema.Seed(ctx, db); err != nil {
+	db := database.DB{Pool: pool}
+	if err := schema.Seed(ctx, &db); err != nil {
 		return err
 	}
 

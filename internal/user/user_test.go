@@ -1,6 +1,7 @@
 package user_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -21,7 +22,11 @@ func TestUser(t *testing.T) {
 		t.Skip("database: skipping integration test")
 	}
 
-	db, teardown := tests.NewUnit(t)
+	deadline := time.Now().Add(time.Second * 15)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+
+	db, teardown := tests.NewUnit(t, ctx)
 	defer teardown()
 
 	u := user.NewStore(db, sec.DefaultParams())
@@ -162,7 +167,11 @@ func TestAuthenticate(t *testing.T) {
 		t.Skip("database: skipping integration test")
 	}
 
-	db, teardown := tests.NewUnit(t)
+	deadline := time.Now().Add(time.Second * 15)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+
+	db, teardown := tests.NewUnit(t, ctx)
 	defer teardown()
 
 	u := user.NewStore(db, sec.DefaultParams())
@@ -233,7 +242,11 @@ func TestChangePassword(t *testing.T) {
 		t.Skip("database: skipping integration test")
 	}
 
-	db, teardown := tests.NewUnit(t)
+	deadline := time.Now().Add(time.Second * 15)
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
+
+	db, teardown := tests.NewUnit(t, ctx)
 	defer teardown()
 
 	u := user.NewStore(db, sec.DefaultParams())

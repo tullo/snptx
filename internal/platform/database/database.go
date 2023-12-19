@@ -6,8 +6,13 @@ import (
 	"net/url"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type DB struct {
+	*pgxpool.Pool
+}
 
 // Config is the required properties to use the database.
 type Config struct {
@@ -61,4 +66,55 @@ func StatusCheck(ctx context.Context, db *pgxpool.Pool) error {
 	const q = `SELECT true`
 	var tmp bool
 	return pgxscan.Get(ctx, db, &tmp, q)
+}
+
+// SanitizeDatabaseName ensures that the database name is a valid postgres identifier.
+func SanitizeDatabaseName(schema string) string {
+	return pgx.Identifier{schema}.Sanitize()
+}
+
+// ConnstrWithDatabase changes the main database in the connection string.
+func ConnstrWithDatabase(connstr, database string) (string, error) {
+	u, err := url.Parse(connstr)
+	if err != nil {
+		return "", fmt.Errorf("invalid connstr: %q", connstr)
+	}
+	u.Path = database
+	return u.String(), nil
+}
+
+func ConnectWithURI(ctx context.Context, uri string) (*DB, error) {
+	pool, err := pgxpool.New(ctx, uri)
+	if err != nil {
+		return nil, fmt.Errorf("database connection error: %w", err)
+	}
+
+	conf, err := traceLogConfig(pool)
+	if err != nil {
+		return nil, fmt.Errorf("database config error: %w", err)
+	}
+
+	pool, err = pgxpool.NewWithConfig(ctx, conf)
+	if err != nil {
+		return nil, fmt.Errorf("database connection error: %w", err)
+	}
+
+	db := DB{pool}
+
+	return &db, nil
+}
+
+func traceLogConfig(pool *pgxpool.Pool) (*pgxpool.Config, error) {
+	// logger, err := zap.NewDevelopmentConfig().Build()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("zap logger error: %w", err)
+	// }
+	conf := pool.Config()
+	// conf.ConnConfig.Tracer = &tracelog.TraceLog{
+	// 	Logger:   zapadapter.NewLogger(logger),
+	// 	LogLevel: tracelog.LogLevelDebug,
+	// }
+
+	return conf, nil
+
 }
