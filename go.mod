@@ -7,7 +7,7 @@ require (
 	github.com/bmizerany/pat v0.0.0-20210406213842-e4b6760bdd6f
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/georgysavva/scany/v2 v2.0.0
-	github.com/golang-migrate/migrate/v4 v4.16.2
+	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golangcollege/sessions v1.2.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.5.0
@@ -22,7 +22,6 @@ require (
 
 require (
 	github.com/cockroachdb/cockroach-go/v2 v2.3.5 // indirect
-	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
