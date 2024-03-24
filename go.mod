@@ -6,7 +6,7 @@ require (
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/bmizerany/pat v0.0.0-20210406213842-e4b6760bdd6f
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
-	github.com/georgysavva/scany/v2 v2.1.0
+	github.com/georgysavva/scany/v2 v2.1.1
 	github.com/golang-migrate/migrate/v4 v4.17.0
 	github.com/golangcollege/sessions v1.2.0
 	github.com/google/go-cmp v0.6.0
