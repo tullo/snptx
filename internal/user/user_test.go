@@ -2,12 +2,12 @@ package user_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/google/go-cmp/cmp"
-	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/platform/sec"
 	"github.com/tullo/snptx/internal/tests"
@@ -101,7 +101,7 @@ func TestUser(t *testing.T) {
 			}
 
 			_, err = u.Create(ctx, nu, now)
-			if errors.Cause(err) != user.ErrDuplicateEmail {
+			if !errors.Is(err, user.ErrDuplicateEmail) {
 				t.Fatalf("\t%s\tShould NOT be able create user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould NOT be able to create user.", tests.Success)
@@ -112,7 +112,7 @@ func TestUser(t *testing.T) {
 			t.Logf("\t%s\tShould be able to delete user.", tests.Success)
 
 			_, err = u.QueryByID(ctx, userID)
-			if errors.Cause(err) != user.ErrNotFound {
+			if !errors.Is(err, user.ErrNotFound) {
 				t.Fatalf("\t%s\tShould NOT be able to retrieve user : %s.", tests.Failed, err)
 			}
 			t.Logf("\t%s\tShould NOT be able to retrieve user.", tests.Success)
