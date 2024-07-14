@@ -2,13 +2,14 @@ package user
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
-	"github.com/jackc/pgconn"
-	"github.com/pkg/errors"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/platform/database"
 	"go.opencensus.io/trace"
@@ -19,18 +20,18 @@ const uniqueViolation = "23505"
 
 var (
 	// ErrNotFound is used when a specific User is requested but does not exist.
-	ErrNotFound = errors.New("User not found")
+	ErrNotFound = errors.New("user not found")
 
 	// ErrInvalidID occurs when an ID is not in a valid form.
 	ErrInvalidID = errors.New("ID is not in its proper form")
 
 	// ErrAuthenticationFailure occurs when a user attempts to authenticate but
 	// anything goes wrong.
-	ErrAuthenticationFailure = errors.New("Authentication failed")
+	ErrAuthenticationFailure = errors.New("authentication failed")
 
 	// ErrForbidden occurs when a user tries to do something that is forbidden
 	// to them according to our access control policies.
-	ErrForbidden = errors.New("Attempted action is not allowed")
+	ErrForbidden = errors.New("attempted action is not allowed")
 
 	// ErrInvalidCredentials occurs when a user  tries to login with
 	// an incorrect email address or password.
@@ -61,7 +62,7 @@ func (s Store) List(ctx context.Context) ([]Info, error) {
 	users := []Info{}
 	const q = `SELECT * FROM users`
 	if err := pgxscan.Select(ctx, s.db, &users, q); err != nil {
-		return nil, errors.Wrap(err, "selecting users")
+		return nil, fmt.Errorf("selecting users: [%w]", err)
 	}
 
 	return users, nil
@@ -74,7 +75,7 @@ func (s Store) Create(ctx context.Context, n NewUser, now time.Time) (*Info, err
 
 	hash, err := argon2id.CreateHash(n.Password, s.hp)
 	if err != nil {
-		return nil, errors.Wrap(err, "generating password hash")
+		return nil, fmt.Errorf("generating password hash: [%w]", err)
 	}
 
 	usr := Info{
@@ -125,7 +126,7 @@ func (s Store) QueryByID(ctx context.Context, id string) (*Info, error) {
 			return nil, ErrNotFound
 		}
 
-		return nil, errors.Wrapf(err, "selecting user %q", id)
+		return nil, fmt.Errorf("selecting user %q: [%w]", id, err)
 	}
 
 	return &usr, nil
@@ -153,7 +154,7 @@ func (s Store) Update(ctx context.Context, id string, upd UpdateUser, now time.T
 	if upd.Password != nil {
 		hash, err := argon2id.CreateHash(*upd.Password, s.hp)
 		if err != nil {
-			return errors.Wrap(err, "generating password hash")
+			return fmt.Errorf("generating password hash: [%w]", err)
 		}
 		usr.PasswordHash = hash
 	}
@@ -169,7 +170,7 @@ func (s Store) Update(ctx context.Context, id string, upd UpdateUser, now time.T
 	  "date_updated" = $6
 	WHERE user_id = $1`
 	if _, err = s.db.Exec(ctx, q, id, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated); err != nil {
-		return errors.Wrap(err, "updating user")
+		return fmt.Errorf("updating user: [%w]", err)
 	}
 
 	return nil
@@ -186,7 +187,7 @@ func (s Store) Delete(ctx context.Context, id string) error {
 
 	const q = `DELETE FROM users WHERE user_id = $1`
 	if _, err := s.db.Exec(ctx, q, id); err != nil {
-		return errors.Wrapf(err, "deleting user %s", id)
+		return fmt.Errorf("deleting user %s: [%w]", id, err)
 	}
 
 	return nil
@@ -208,7 +209,7 @@ func (s Store) Authenticate(ctx context.Context, now time.Time, email, password 
 			return auth.Claims{}, ErrAuthenticationFailure
 		}
 
-		return auth.Claims{}, errors.Wrap(err, "selecting single user")
+		return auth.Claims{}, fmt.Errorf("selecting single user: [%w]", err)
 	}
 
 	// Compare the provided password with the saved hash. Use the bcrypt
@@ -242,7 +243,7 @@ func (s Store) ChangePassword(ctx context.Context, id string, currentPassword, n
 	// generate hash based on the new password
 	hash, err := argon2id.CreateHash(newPassword, s.hp)
 	if err != nil {
-		return errors.Wrap(err, "generating password hash")
+		return fmt.Errorf("generating password hash: [%w]", err)
 	}
 
 	// persist the new hash
