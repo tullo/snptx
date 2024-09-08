@@ -2,7 +2,7 @@ module github.com/tullo/snptx
 
 go 1.22.0
 
-toolchain go1.22.7
+toolchain go1.23.1
 
 require (
 	github.com/alexedwards/argon2id v1.0.0
