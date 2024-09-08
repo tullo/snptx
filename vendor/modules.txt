@@ -14,8 +14,8 @@ github.com/dgrijalva/jwt-go/v4
 ## explicit; go 1.18
 github.com/georgysavva/scany/v2/dbscan
 github.com/georgysavva/scany/v2/pgxscan
-# github.com/golang-migrate/migrate/v4 v4.17.1
-## explicit; go 1.18
+# github.com/golang-migrate/migrate/v4 v4.18.1
+## explicit; go 1.22.0
 github.com/golang-migrate/migrate/v4
 github.com/golang-migrate/migrate/v4/database
 github.com/golang-migrate/migrate/v4/database/cockroachdb
@@ -78,8 +78,6 @@ github.com/justinas/nosurf
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
-# github.com/opencontainers/image-spec v1.1.0-rc5
-## explicit; go 1.18
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
@@ -96,7 +94,7 @@ go.opencensus.io/trace/tracestate
 # go.uber.org/atomic v1.11.0
 ## explicit; go 1.18
 go.uber.org/atomic
-# golang.org/x/crypto v0.25.0
+# golang.org/x/crypto v0.27.0
 ## explicit; go 1.20
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
@@ -105,15 +103,13 @@ golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/salsa20/salsa
-# golang.org/x/net v0.25.0
-## explicit; go 1.18
-# golang.org/x/sync v0.7.0
+# golang.org/x/sync v0.8.0
 ## explicit; go 1.18
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.22.0
+# golang.org/x/sys v0.25.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
-# golang.org/x/text v0.16.0
+# golang.org/x/text v0.18.0
 ## explicit; go 1.18
 golang.org/x/text/cases
 golang.org/x/text/internal
