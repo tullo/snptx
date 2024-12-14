@@ -22,8 +22,8 @@ github.com/golang-migrate/migrate/v4/database/cockroachdb
 github.com/golang-migrate/migrate/v4/internal/url
 github.com/golang-migrate/migrate/v4/source
 github.com/golang-migrate/migrate/v4/source/httpfs
-# github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
-## explicit
+# github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8
+## explicit; go 1.20
 github.com/golang/groupcache/lru
 # github.com/golangcollege/sessions v1.2.0
 ## explicit; go 1.13

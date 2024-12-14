@@ -1,6 +1,6 @@
 module github.com/tullo/snptx
 
-go 1.22.0
+go 1.23
 
 toolchain go1.23.4
 
@@ -23,7 +23,7 @@ require (
 
 require (
 	github.com/cockroachdb/cockroach-go/v2 v2.3.8 // indirect
-	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
