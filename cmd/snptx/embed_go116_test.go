@@ -4,7 +4,6 @@
 package main
 
 import (
-	"fmt"
 	"io/fs"
 	"testing"
 
@@ -32,6 +31,6 @@ func TestEmbedHTMLTemplates(t *testing.T) {
 		if err != nil {
 			t.Error(errors.Wrapf(err, "reading embeded file %s", f.Name()))
 		}
-		t.Logf(fmt.Sprintf("%s, (%v) bytes", f.Name(), len(b)))
+		t.Logf("%s, (%v) bytes", f.Name(), len(b))
 	}
 }
