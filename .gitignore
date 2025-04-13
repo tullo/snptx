@@ -16,3 +16,5 @@
 # vendor/
 tls/
 bin/
+snptx
+snptx-admin
