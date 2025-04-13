@@ -11,30 +11,32 @@ tasks:
 
   run-checks:
     cmds:
-      - go vet .
-      - staticcheck -go 'module' .
+      - go vet ./cmd/... ./internal/...
+      - staticcheck -go 'module' ./cmd/... ./internal/...
     silent: true
 
   build:
     cmds:
-      - go build -mod=mod -trimpath .
+      - go build -mod=vendor -trimpath ./cmd/snptx-admin
+      - go build -mod=vendor -trimpath ./cmd/snptx
       - defer: { task: run-checks }
     silent: true
 
   build-race:
     cmds:
-      - go build -race -mod=mod -trimpath .
+      - go build -race -mod=vendor -trimpath ./cmd/snptx-admin
+      - go build -race -mod=vendor -trimpath ./cmd/snptx
       - defer: { task: run-checks }
     silent: true
 
   deps-list:
     cmds:
-      - go list -mod=mod all
+      - go list -mod=vendor all
 
   deps-reset:
     cmds:
       - git checkout -- go.mod
-      - defer: { task: go-tidy }
+      - defer: { task: vendor }
     silent: true
 
   deps-clean-modcache:
@@ -42,12 +44,32 @@ tasks:
       - go clean -modcache
 
   deps-upgrade:
+    # -d flag ...download the source code needed to build ...
+    # -t flag ...consider modules needed to build tests ...
+    # -u flag ...use newer minor or patch releases when available 
     cmds:
-      - go get -u -t -v .
-      - defer: { task: tidy }
-    silent: true
+      - go get -d -t -u -v ./...
+      - defer: { task: vendor }
+    silent: false
 
-  tidy:
+  vendor:
     cmds:
       - go mod tidy
+      - go mod vendor
+    silent: true
+
+  mkcert-install-rootCA:
+    cmds:
+      - mkcert -install
+    silent: true
+
+  mkcert-generate-certs:
+    cmds:
+      - mkdir -p tls/localhost
+      - |
+        mkcert \
+          -cert-file ./tls/localhost/cert.pem \
+          -key-file ./tls/localhost/key.pem \
+          snptx.127.0.0.1.nip.io snptx.test snptx 0.0.0.0 \
+          localhost 127.0.0.1 ::1
     silent: true
