@@ -1,0 +1,53 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+
+  default:
+    cmds:
+      - task --list-all
+    silent: true
+
+  run-checks:
+    cmds:
+      - go vet .
+      - staticcheck -go 'module' .
+    silent: true
+
+  build:
+    cmds:
+      - go build -mod=mod -trimpath .
+      - defer: { task: run-checks }
+    silent: true
+
+  build-race:
+    cmds:
+      - go build -race -mod=mod -trimpath .
+      - defer: { task: run-checks }
+    silent: true
+
+  deps-list:
+    cmds:
+      - go list -mod=mod all
+
+  deps-reset:
+    cmds:
+      - git checkout -- go.mod
+      - defer: { task: go-tidy }
+    silent: true
+
+  deps-clean-modcache:
+    cmds:
+      - go clean -modcache
+
+  deps-upgrade:
+    cmds:
+      - go get -u -t -v .
+      - defer: { task: tidy }
+    silent: true
+
+  tidy:
+    cmds:
+      - go mod tidy
+    silent: true
