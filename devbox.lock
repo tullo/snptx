@@ -172,6 +172,54 @@
           "store_path": "/nix/store/cfjhl0kn7xc65466pha9fkrvigw3g72n-go-1.24.1"
         }
       }
+    },
+    "mkcert@1.4.4": {
+      "last_modified": "2025-03-11T17:52:14Z",
+      "resolved": "github:NixOS/nixpkgs/0d534853a55b5d02a4ababa1d71921ce8f0aee4c#mkcert",
+      "source": "devbox-search",
+      "version": "1.4.4",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/xlp7aw0favaj9k60f7ss03lx1f5a7ngk-mkcert-1.4.4",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/xlp7aw0favaj9k60f7ss03lx1f5a7ngk-mkcert-1.4.4"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/frllg5x98hpbvl126m9q376k06mccljw-mkcert-1.4.4",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/frllg5x98hpbvl126m9q376k06mccljw-mkcert-1.4.4"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/l83kf4amb7cbj28m4bsqpl1a5fiip50f-mkcert-1.4.4",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/l83kf4amb7cbj28m4bsqpl1a5fiip50f-mkcert-1.4.4"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/7s2qsfvl1xzisq0bpmwh7d54c1frhbwf-mkcert-1.4.4",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/7s2qsfvl1xzisq0bpmwh7d54c1frhbwf-mkcert-1.4.4"
+        }
+      }
     }
   }
 }
