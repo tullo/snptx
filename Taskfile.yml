@@ -17,15 +17,15 @@ tasks:
 
   build:
     cmds:
-      - go build -mod=vendor -trimpath ./cmd/snptx-admin
-      - go build -mod=vendor -trimpath ./cmd/snptx
+      - go build -mod=vendor -trimpath -o ./bin/snptx-admin ./cmd/snptx-admin
+      - go build -mod=vendor -trimpath -o ./bin/snptx       ./cmd/snptx
       - defer: { task: run-checks }
     silent: true
 
   build-race:
     cmds:
-      - go build -race -mod=vendor -trimpath ./cmd/snptx-admin
-      - go build -race -mod=vendor -trimpath ./cmd/snptx
+      - go build -race -mod=vendor -trimpath -o ./bin/snptx-admin ./cmd/snptx-admin
+      - go build -race -mod=vendor -trimpath -o ./bin/snptx       ./cmd/snptx
       - defer: { task: run-checks }
     silent: true
 
