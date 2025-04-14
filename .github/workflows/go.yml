@@ -57,6 +57,6 @@ jobs:
         DATABASE_URL: postgresql://root@localhost:26257/snptx?sslmode=disable
         
     - name: Upload coverage
-      uses: codecov/codecov-action@v5.4.0
+      uses: codecov/codecov-action@v5.4.1
       with:
         file: coverprofile.cov
