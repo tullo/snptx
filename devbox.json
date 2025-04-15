@@ -5,7 +5,8 @@
     "go-task@3.41.0",
     "git@2.48.1",
     "mkcert@1.4.4",
-    "sqlc@1.28.0"
+    "sqlc@1.28.0",
+    "direnv@2.36.0"
   ],
   "shell": {
     "init_hook": [
@@ -17,7 +18,9 @@
       "alias tl='task --list-all'",
       "export GOBIN=$(git rev-parse --show-toplevel)/bin",
       "export PATH=\"$GOBIN:$PATH\"",
-      "go install honnef.co/go/tools/cmd/staticcheck@latest"
+      "go install honnef.co/go/tools/cmd/staticcheck@latest",
+      "bash envars.sh",
+      "direnv allow"
     ],
     "scripts": {
       "test": [

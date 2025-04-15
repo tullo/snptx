@@ -18,3 +18,7 @@ tls/
 bin/
 snptx
 snptx-admin
+cockroach-data/
+cockroach
+certs/
+my-safe-directory/
