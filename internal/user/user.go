@@ -10,6 +10,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/tullo/snptx/internal/db"
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/platform/database"
 	"go.opencensus.io/trace"
@@ -47,11 +48,16 @@ var (
 type Store struct {
 	db *database.DB
 	hp *argon2id.Params
+	q  *db.Queries
 }
 
 // NewStore constructs a Store for api access.
-func NewStore(db *database.DB, hp *argon2id.Params) Store {
-	return Store{db: db, hp: hp}
+func NewStore(d *database.DB, hp *argon2id.Params) Store {
+	return Store{
+		db: d,
+		hp: hp,
+		q:  db.New(d),
+	}
 }
 
 // List retrieves a list of existing users from the database.
@@ -59,10 +65,22 @@ func (s Store) List(ctx context.Context) ([]Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.user.List")
 	defer span.End()
 
-	users := []Info{}
-	const q = `SELECT * FROM users`
-	if err := pgxscan.Select(ctx, s.db, &users, q); err != nil {
+	us, err := s.q.ListUsers(ctx)
+	if err != nil {
 		return nil, fmt.Errorf("selecting users: [%w]", err)
+	}
+	users := make([]Info, len(us))
+	for i, v := range us {
+		users[i] = Info{
+			ID:           v.UserID,
+			Name:         v.Name.String,
+			Email:        v.Email.String,
+			Active:       v.Active.Bool,
+			PasswordHash: v.PasswordHash.String,
+			Roles:        v.Roles,
+			DateCreated:  v.DateCreated.Time,
+			DateUpdated:  v.DateUpdated.Time,
+		}
 	}
 
 	return users, nil
@@ -78,24 +96,17 @@ func (s Store) Create(ctx context.Context, n NewUser, now time.Time) (*Info, err
 		return nil, fmt.Errorf("generating password hash: [%w]", err)
 	}
 
-	usr := Info{
-		ID:           uuid.New().String(),
-		Name:         n.Name,
-		Email:        n.Email,
-		Active:       true,
-		PasswordHash: hash,
-		Roles:        n.Roles,
-		DateCreated:  now.UTC(),
-		DateUpdated:  now.UTC(),
-	}
-
-	const q = `
-	INSERT INTO users
-	  (user_id, name, email, active, password_hash, roles, date_created, date_updated)
-	VALUES
-	  ($1, $2, $3, $4, $5, $6, $7, $8)`
-	if _, err = s.db.Exec(ctx, q,
-		usr.ID, usr.Name, usr.Email, usr.Active, usr.PasswordHash, usr.Roles, usr.DateCreated, usr.DateUpdated); err != nil {
+	u, err := s.q.CreateUser(ctx, db.GetCreateUserParams(
+		uuid.New().String(),
+		n.Name,
+		n.Email,
+		true,
+		hash,
+		n.Roles,
+		now.UTC(),
+		now.UTC(),
+	))
+	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == uniqueViolation {
@@ -107,7 +118,16 @@ func (s Store) Create(ctx context.Context, n NewUser, now time.Time) (*Info, err
 		return nil, err
 	}
 
-	return &usr, nil
+	return &Info{
+		ID:           u.UserID,
+		Name:         u.Name.String,
+		Email:        u.Email.String,
+		Active:       u.Active.Bool,
+		PasswordHash: u.PasswordHash.String,
+		Roles:        u.Roles,
+		DateCreated:  u.DateCreated.Time,
+		DateUpdated:  u.DateUpdated.Time,
+	}, nil
 }
 
 // QueryByID gets the specified user from the database.
@@ -119,9 +139,8 @@ func (s Store) QueryByID(ctx context.Context, id string) (*Info, error) {
 		return nil, ErrInvalidID
 	}
 
-	var usr Info
-	const q = `SELECT * FROM users WHERE user_id = $1`
-	if err := pgxscan.Get(ctx, s.db, &usr, q, id); err != nil {
+	u, err := s.q.GetUser(ctx, id)
+	if err != nil {
 		if pgxscan.NotFound(err) {
 			return nil, ErrNotFound
 		}
@@ -129,7 +148,16 @@ func (s Store) QueryByID(ctx context.Context, id string) (*Info, error) {
 		return nil, fmt.Errorf("selecting user %q: [%w]", id, err)
 	}
 
-	return &usr, nil
+	return &Info{
+		ID:           u.UserID,
+		Name:         u.Name.String,
+		Email:        u.Email.String,
+		Active:       u.Active.Bool,
+		PasswordHash: u.PasswordHash.String,
+		Roles:        u.Roles,
+		DateCreated:  u.DateCreated.Time,
+		DateUpdated:  u.DateUpdated.Time,
+	}, nil
 }
 
 // Update replaces a user document in the database.
@@ -161,15 +189,15 @@ func (s Store) Update(ctx context.Context, id string, upd UpdateUser, now time.T
 
 	usr.DateUpdated = now
 
-	const q = `
-	UPDATE users SET
-	  "name" = $2,
-	  "email" = $3,
-	  "roles" = $4,
-	  "password_hash" = $5,
-	  "date_updated" = $6
-	WHERE user_id = $1`
-	if _, err = s.db.Exec(ctx, q, id, usr.Name, usr.Email, usr.Roles, usr.PasswordHash, usr.DateUpdated); err != nil {
+	err = s.q.UpdateUser(ctx, db.GetUpdateUserParams(
+		id,
+		usr.Name,
+		usr.Email,
+		usr.Roles,
+		usr.PasswordHash,
+		usr.DateUpdated,
+	))
+	if err != nil {
 		return fmt.Errorf("updating user: [%w]", err)
 	}
 
@@ -185,8 +213,8 @@ func (s Store) Delete(ctx context.Context, id string) error {
 		return ErrInvalidID
 	}
 
-	const q = `DELETE FROM users WHERE user_id = $1`
-	if _, err := s.db.Exec(ctx, q, id); err != nil {
+	err := s.q.DeleteUser(ctx, id)
+	if err != nil {
 		return fmt.Errorf("deleting user %s: [%w]", id, err)
 	}
 
@@ -200,9 +228,8 @@ func (s Store) Authenticate(ctx context.Context, now time.Time, email, password 
 	ctx, span := trace.StartSpan(ctx, "internal.user.Authenticate")
 	defer span.End()
 
-	const q = `SELECT * FROM users WHERE email = $1`
-	var usr Info
-	if err := pgxscan.Get(ctx, s.db, &usr, q, email); err != nil {
+	u, err := s.q.GetUserByEmail(ctx, db.AsText(email))
+	if err != nil {
 		// Normally we would return ErrNotFound in this scenario but we do not want
 		// to leak to an unauthenticated user which emails are in the system.
 		if pgxscan.NotFound(err) {
@@ -210,6 +237,11 @@ func (s Store) Authenticate(ctx context.Context, now time.Time, email, password 
 		}
 
 		return auth.Claims{}, fmt.Errorf("selecting single user: [%w]", err)
+	}
+	usr := Info{
+		ID:           u.UserID,
+		PasswordHash: u.PasswordHash.String,
+		Roles:        u.Roles,
 	}
 
 	// Compare the provided password with the saved hash. Use the bcrypt
@@ -247,8 +279,10 @@ func (s Store) ChangePassword(ctx context.Context, id string, currentPassword, n
 	}
 
 	// persist the new hash
-	stmt := "UPDATE users SET password_hash = $1 WHERE user_id = $2"
-	_, err = s.db.Exec(ctx, stmt, hash, id)
+	err = s.q.ChangePassword(ctx, db.GetChangePasswordParams(hash, id))
+	if err != nil {
+		return fmt.Errorf("changing the password: [%w]", err)
+	}
 
-	return err
+	return nil
 }
