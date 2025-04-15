@@ -180,7 +180,7 @@ func run(log *log.Logger) error {
 	}
 
 	// sessions expire after 12 hours
-	session := sessions.New([]byte(cfg.Web.SessionSecret))
+	session := sessions.New(decoded)
 	session.Lifetime = 12 * time.Hour
 	// set the secure flag on session cookies and
 	// serve all requests over https in production environment
