@@ -1,6 +1,10 @@
 -- name: GetUser :one
 SELECT * FROM users
-  WHERE user_id = $1 LIMIT 1;
+  WHERE "user_id" = $1;
+
+-- name: GetUserByEmail :one
+SELECT * FROM users
+  WHERE email = $1;
 
 -- name: ListUsers :many
 SELECT * FROM users
@@ -23,6 +27,14 @@ UPDATE users
     "date_updated" = $6
   WHERE user_id = $1;
 
+-- name: ChangePassword :exec
+UPDATE users
+  SET
+    "password_hash" = $1
+  WHERE
+    "user_id" = $2;
+
 -- name: DeleteUser :exec
 DELETE FROM users
-  WHERE user_id = $1;
+  WHERE
+    "user_id" = $1;
