@@ -33,6 +33,14 @@ tasks:
     cmds:
       - go list -mod=vendor all
 
+  deps-list-final:
+    # -m flag causes list to list modules instead of packages.
+    cmds:
+      - go list -mod=readonly -m all
+      - echo '==>' List of modules versions that will be used in a build for all direct and indirect dependencies.
+      - go list -mod=readonly -m all | wc -l
+    silent: true
+
   deps-reset:
     cmds:
       - git checkout -- go.mod
@@ -73,3 +81,108 @@ tasks:
           snptx.127.0.0.1.nip.io snptx.test snptx 0.0.0.0 \
           localhost 127.0.0.1 ::1
     silent: true
+
+  cockroach-binary:
+    cmds:
+      - wget https://binaries.cockroachdb.com/cockroach-v25.1.2.linux-amd64.tgz
+      - tar -xf cockroach-v25.1.2.linux-amd64.tgz cockroach-v25.1.2.linux-amd64/cockroach
+      - mv cockroach-v25.1.2.linux-amd64/cockroach cockroach
+      - rm -rf cockroach-v25.1.2.linux-amd64*
+    status:
+      - test -f cockroach
+
+  certs:
+    deps: [cockroach-binary]
+    cmds:
+      - mkdir certs my-safe-directory
+      - $PWD/cockroach cert create-ca --certs-dir=certs --ca-key=my-safe-directory/ca.key
+      - $PWD/cockroach cert create-node localhost $(hostname) --certs-dir=certs --ca-key=my-safe-directory/ca.key
+      - $PWD/cockroach cert create-client root --certs-dir=certs --ca-key=my-safe-directory/ca.key
+      - $PWD/cockroach --certs-dir=certs cert list
+    status:
+      - test -d certs
+      - test -d my-safe-directory
+
+  clean-database-data:
+    cmds:
+      - rm -rf cockroach-data
+
+  cockroach-start:
+    deps: [cockroach-binary, certs, clean-database-data]
+    desc: Starts the CockroachDB server in single-node mode
+    cmds:
+      # pgrep returns:
+      # 0 : One or more processes matched the criteria.
+      # 1 : No processes matched or none of them could be signalled
+      - >
+        PID=$(pgrep cockroach) || true &&
+        if [[ -n "$PID" ]]; then
+          echo "⚠️ CockroachDB server is already running (PID=$RESULT), Stop it first!"
+        else
+          echo "🚀 Starting the CockroachDB server!"
+          ${PWD}/cockroach start-single-node --certs-dir=certs --store=./cockroach-data --sql-addr=:26257 --listen-addr=:26258 --advertise-addr $(hostname) --http-addr=localhost:8080 --background
+          ${PWD}/cockroach node status --certs-dir=certs --host=$(hostname)
+          ${PWD}/cockroach sql --certs-dir=certs --user=root -f dbinit.sql
+          ${PWD}/cockroach sql --certs-dir=certs --user=root --execute="SHOW DATABASES;"
+        fi
+    requires:
+      vars: [DATABASE_URL]
+    silent: false
+
+  cockroach-stop:
+    desc: Stops the CockroachDB server
+    deps: [cockroach-binary]
+    cmds:
+      - >
+        PID=$(pgrep cockroach) || true &&
+        if [[ -n "$PID" ]]; then
+          echo "⚠️ killing cockroach process $(pgrep cockroach)"
+          #kill -TERM 19584
+          ${PWD}/cockroach node drain --certs-dir=certs --host=$(hostname):26258 --self --shutdown
+        fi
+      - defer: { task: clean-database-data }
+    requires:
+      vars: [DATABASE_URL]
+    silent: true
+
+  go-test:
+    go test -count=1 -failfast -mod=vendor -test.timeout=30s ./...
+
+  go-api-config:
+    cmds:
+      - go run ./cmd/snptx --help
+    silent: true
+
+  go-run:
+    cmds:
+      - echo '==>' Activating debug mode to get detailed errors and stack traces in the http response.
+      - |
+        go run ./cmd/snptx \
+          --db-disable-tls=1 \
+          --web-debug-mode=true \
+          --web-session-secret='{{.SESSION_SECRET}}' \
+          --aragon-memory={{.MEMORY}} \
+          --aragon-iterations=1 \
+          --aragon-parallelism=1
+      - defer: { task: run-checks }
+    vars:
+      MEMORY:
+        sh: echo $((64*1024))
+      SESSION_SECRET:
+        sh: echo $(openssl rand -base64 32)
+    silent: true
+
+  go-migrate:
+    cmds:
+      - go run ./cmd/snptx-admin/main.go migrate
+    silent: true
+
+  go-seed:
+    cmds:
+      - go run ./cmd/snptx-admin/main.go seed
+    silent: true
+
+  sqlc-generate:
+    cmds:
+      - sqlc generate
+    silent: false
