@@ -6,12 +6,12 @@ import (
 
 // Info represents a textual extract of something
 type Info struct {
-	ID          string    `db:"snippet_id" json:"id"`
-	Title       string    `db:"title" json:"title"`
-	Content     string    `db:"content" json:"content"`
-	DateExpires time.Time `db:"date_expires" json:"date_expires"`
-	DateCreated time.Time `db:"date_created" json:"date_created"`
-	DateUpdated time.Time `db:"date_updated" json:"date_updated"`
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Content     string    `json:"content"`
+	DateExpires time.Time `json:"date_expires"`
+	DateCreated time.Time `json:"date_created"`
+	DateUpdated time.Time `json:"date_updated"`
 }
 
 // NewSnippet contains information needed to create a new Snippet.

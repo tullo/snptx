@@ -7,6 +7,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/tullo/snptx/internal/db"
 	"github.com/tullo/snptx/internal/platform/database"
 	"go.opencensus.io/trace"
 )
@@ -23,11 +24,15 @@ var (
 // connection pool.
 type Store struct {
 	db *database.DB
+	q  *db.Queries
 }
 
 // NewStore constructs a Store for api access.
-func NewStore(db *database.DB) Store {
-	return Store{db: db}
+func NewStore(d *database.DB) Store {
+	return Store{
+		db: d,
+		q:  db.New(d),
+	}
 }
 
 // Create inserts a new snippet record into the database.
@@ -35,22 +40,25 @@ func (s Store) Create(ctx context.Context, n NewSnippet, now time.Time) (*Info, 
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Create")
 	defer span.End()
 
-	spt := Info{
-		ID:          uuid.New().String(),
-		Title:       n.Title,
-		Content:     n.Content,
-		DateExpires: n.DateExpires,
-		DateCreated: now,
-		DateUpdated: now,
+	sn, err := s.q.CreateSnippet(ctx, db.GetCreateSnippetParams(
+		uuid.New().String(),
+		n.Title,
+		n.Content,
+		n.DateExpires,
+		now,
+		now,
+	))
+	if err != nil {
+		return nil, errors.Wrap(err, "inserting snippet")
 	}
 
-	const q = `
-	INSERT INTO snippets
-	  (snippet_id, title, content, date_expires, date_created, date_updated)
-	VALUES
-	  ($1, $2, $3, $4, $5, $6)`
-	if _, err := s.db.Exec(ctx, q, spt.ID, spt.Title, spt.Content, spt.DateExpires, spt.DateCreated, spt.DateUpdated); err != nil {
-		return nil, errors.Wrap(err, "inserting snippet")
+	spt := Info{
+		ID:          sn.SnippetID,
+		Title:       sn.Title.String,
+		Content:     sn.Content.String,
+		DateExpires: sn.DateExpires.Time,
+		DateCreated: sn.DateCreated.Time,
+		DateUpdated: sn.DateUpdated.Time,
 	}
 
 	return &spt, nil
@@ -65,9 +73,8 @@ func (s Store) Retrieve(ctx context.Context, id string) (*Info, error) {
 		return nil, ErrInvalidID
 	}
 
-	var spt Info
-	const q = `SELECT * FROM snippets WHERE snippet_id = $1`
-	if err := pgxscan.Get(ctx, s.db, &spt, q, id); err != nil {
+	snip, err := s.q.GetSnippet(ctx, id)
+	if err != nil {
 		if pgxscan.NotFound(err) {
 			return nil, ErrNotFound
 		}
@@ -75,7 +82,14 @@ func (s Store) Retrieve(ctx context.Context, id string) (*Info, error) {
 		return nil, errors.Wrapf(err, "selecting snippet %q", id)
 	}
 
-	return &spt, nil
+	return &Info{
+		ID:          snip.SnippetID,
+		Title:       snip.Title.String,
+		Content:     snip.Content.String,
+		DateExpires: snip.DateExpires.Time,
+		DateCreated: snip.DateCreated.Time,
+		DateUpdated: snip.DateUpdated.Time,
+	}, nil
 }
 
 // Update updates a snippet record in the database.
@@ -100,14 +114,14 @@ func (s Store) Update(ctx context.Context, id string, upd UpdateSnippet, now tim
 
 	spt.DateUpdated = now
 
-	const q = `
-	UPDATE snippets SET
-	  "title" = $2,
-	  "content" = $3,
-	  "date_expires" = $4,
-	  "date_updated" = $5
-	WHERE snippet_id = $1`
-	if _, err = s.db.Exec(ctx, q, id, spt.Title, spt.Content, spt.DateExpires, now); err != nil {
+	err = s.q.UpdateSnippet(ctx, db.GetUpdateSnippetParams(
+		id,
+		spt.Title,
+		spt.Content,
+		spt.DateExpires,
+		spt.DateUpdated,
+	))
+	if err != nil {
 		return errors.Wrap(err, "updating snippet")
 	}
 
@@ -123,8 +137,8 @@ func (s Store) Delete(ctx context.Context, id string) error {
 		return ErrInvalidID
 	}
 
-	const q = `DELETE FROM snippets WHERE snippet_id = $1`
-	if _, err := s.db.Exec(ctx, q, id); err != nil {
+	err := s.q.DeleteSnippet(ctx, id)
+	if err != nil {
 		return errors.Wrapf(err, "deleting snippet %s", id)
 	}
 
@@ -136,15 +150,22 @@ func (s Store) Latest(ctx context.Context) ([]Info, error) {
 	ctx, span := trace.StartSpan(ctx, "internal.snippet.Latest")
 	defer span.End()
 
-	snippets := []Info{}
-	const q = `
-	SELECT * FROM snippets
-	WHERE date_expires > NOW()
-	ORDER BY date_created DESC
-	LIMIT 10;`
-	if err := pgxscan.Select(ctx, s.db, &snippets, q); err != nil {
+	ss, err := s.q.ListLatestSnippets(ctx)
+	if err != nil {
 		return nil, errors.Wrap(err, "selecting snippets")
 	}
 
-	return snippets, nil
+	is := make([]Info, len(ss))
+	for i, v := range ss {
+		is[i] = Info{
+			ID:          v.SnippetID,
+			Title:       v.Title.String,
+			Content:     v.Content.String,
+			DateExpires: v.DateExpires.Time,
+			DateCreated: v.DateCreated.Time,
+			DateUpdated: v.DateUpdated.Time,
+		}
+	}
+
+	return is, nil
 }

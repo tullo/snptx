@@ -40,8 +40,8 @@ func dropDatabase(ctx context.Context, pool *database.DB, name string) error {
 	return err
 }
 
-// NewUnit creates a test database inside a Docker container. It creates the
-// required table structure but the database is otherwise empty.
+// NewUnit creates a test database. It creates the required
+// table structure but the database is otherwise empty.
 //
 // It does not return errors as this is intended for testing only.
 // Instead it will call Fatal on the provided testing.T if anything goes wrong.
