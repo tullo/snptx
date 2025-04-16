@@ -3,7 +3,9 @@ package database
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/url"
+	"os"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
@@ -25,7 +27,12 @@ type Config struct {
 
 // Connect establishes a database connection based on the configuration.
 func Connect(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
-	p, err := pgxpool.New(ctx, ConnString(cfg))
+	dbaddr, ok := os.LookupEnv("DATABASE_URL")
+	if !ok {
+		log.Println("DATABASE_URL env var not defined")
+	}
+
+	p, err := pgxpool.New(ctx, dbaddr)
 	if err != nil {
 		return nil, fmt.Errorf("database connection error: %w", err)
 	}

@@ -75,7 +75,12 @@ func run() error {
 }
 
 func migrate(cfg database.Config) error {
-	if err := schema.Migrate(database.ConnString(cfg)); err != nil {
+	dbaddr, ok := os.LookupEnv("DATABASE_URL")
+	if !ok {
+		log.Println("DATABASE_URL env var not defined")
+	}
+
+	if err := schema.Migrate(dbaddr); err != nil {
 		return err
 	}
 
