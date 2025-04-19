@@ -12,7 +12,7 @@ html, body {
 
 body {
     line-height: 1.5;
-    background-color: #0d1117;
+    background-color: #141935;
     color: #34495E;
     overflow-y: scroll;
 }
@@ -45,7 +45,7 @@ h1 a:hover {
 }
 
 h2 {
-    color: #58a6ff;
+    color: #585eff;
     font-size: 22px;
     margin-bottom: 36px;
     position: relative;
@@ -53,13 +53,13 @@ h2 {
 }
 
 a {
-    color: darkgrey;
+    color: #58a6ff;
     text-decoration: none;
 }
 
 a:hover {
     background-color: #34495e;
-    color: #000;
+    color: #be0e92;
     text-decoration: underline;
 }
 
@@ -91,7 +91,7 @@ nav {
     border-bottom: 1px solid #E4E5E7;
     padding-top: 17px;
     padding-bottom: 15px;
-    background-color: #000;
+    background-color: #000523;
     height: 60px;
     color: #6A6C6F;
 }
@@ -232,7 +232,7 @@ button:hover {
 }
 
 .snippet {
-    background-color: #34495e;
+    background-color: #1f233d;
     color: #f5fffa;
     border: 1px solid #E4E5E7;
     border-radius: 3px;
@@ -245,7 +245,7 @@ button:hover {
 }
 
 .snippet .metadata {
-    background-color: #000;
+    background-color: #000523;
     color: #2f4f4f;
     padding: 0.75em 18px;
     overflow: auto;
@@ -290,21 +290,25 @@ div.error {
 }
 
 table {
-    background-color: #708090;
+    background-color: #1f233d;
     border: 1px solid #E4E5E7;
     border-collapse: collapse;
     width: 100%;
 }
 
+table tr:first-child {
+  background-color: #000523;
+}
+
 td, th {
     text-align: left;
     padding: 9px 18px;
-    color: #000;
+    color: darkgray;
 }
 
 th:last-child, td:last-child {
     text-align: right;
-    color: #000;
+    color: darkgray;
 }
 
 tr {
@@ -312,15 +316,25 @@ tr {
 }
 
 tr:nth-child(2n) {
-    background-color: #2f4f4f;
+    background-color: #0d122d;
 }
 
 footer {
     border-top: 1px solid #E4E5E7;
     padding-top: 17px;
     padding-bottom: 15px;
-    background-color: #000;
+    background-color: #000523;
     height: 60px;
     color: #6A6C6F;
     text-align: center;
+}
+
+
+.about {
+    background-color: #000523;
+    color: #e91e63;
+}
+
+.about p {
+    padding: 0.8em;
 }
