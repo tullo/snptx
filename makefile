@@ -83,7 +83,7 @@ docker-build-image: staticcheck
 		-f Dockerfile \
 		-t $(REGISTRY_HOSTNAME)/$(REGISTRY_ACCOUNT)/snptx-amd64:$(VERSION) \
 		--build-arg VCS_REF=`git rev-parse HEAD` \
-		--build-arg BUILD_DATE=`date -u +”%Y-%m-%dT%H:%M:%SZ”` \
+		--build-arg BUILD_DATE=`date --utc +"%Y-%m-%dT%H:%M:%S%Z"` \
 		.
 
 docker-tag-image:
