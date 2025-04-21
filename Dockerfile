@@ -22,10 +22,10 @@ RUN go build -mod=vendor
 
 # Build the service binary.
 WORKDIR /app/cmd/snptx
-RUN go build -ldflags "-X main.build=${VCS_REF}" -mod=vendor
+RUN go build -ldflags "-w -X main.build=${VCS_REF}" -mod=vendor
 # The linker sets 'var build' in main.go to the specified git revision
 # See https://golang.org/cmd/link/ for supported linker flags
-
+# -w (omit debug information)
 
 # Build production image with Go binaries based on Alpine.
 FROM alpine:3.21.3
