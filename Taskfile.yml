@@ -2,6 +2,10 @@
 
 version: '3'
 
+vars:
+  VCS_REF:
+    sh: git rev-parse HEAD
+
 tasks:
 
   default:
@@ -17,10 +21,20 @@ tasks:
 
   build:
     cmds:
-      - go build -mod=vendor -trimpath -o ./bin/snptx-admin ./cmd/snptx-admin
-      - go build -mod=vendor -trimpath -o ./bin/snptx       ./cmd/snptx
-      - defer: { task: run-checks }
-    silent: true
+      - echo '==>' Building the snptx-admin and snptx binaries
+      - go build -mod=vendor -buildvcs=false -o ./bin/snptx-admin ./cmd/snptx-admin
+      - go build -mod=vendor -buildvcs=false -o ./bin/snptx -ldflags "{{.LDFLAGS}}" ./cmd/snptx
+      - go version -m ./bin/snptx | grep ldflags
+      # https://pkg.go.dev/cmd/link (-X importpath.name=value)
+      # using -trimpath currently causes ldflags to be ignored:
+      #   https://github.com/golang/go/blob/master/src/cmd/go/internal/load/pkg.go#L2420
+      #   https://go-review.googlesource.com/c/go/+/608818
+    env:
+      CGO_ENABLED: 0
+    vars:
+      LDFLAGS:
+        sh: echo "-X main.build={{.VCS_REF}}"
+    silent: false
 
   build-race:
     cmds:
