@@ -1,3 +1,4 @@
+//go:build go1.16
 // +build go1.16
 
 package main
@@ -5,14 +6,13 @@ package main
 import (
 	"html/template"
 	"io/fs"
-	"path"
 	"path/filepath"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/tullo/snptx/internal/forms"
 	"github.com/tullo/snptx/internal/snippet"
 	"github.com/tullo/snptx/internal/user"
+	"github.com/tullo/snptx/ui"
 )
 
 type templateData struct {
@@ -48,34 +48,12 @@ var functions = template.FuncMap{
 	"shortID":   shortID,
 }
 
-func newTemplateCache(dir string) (map[string]*template.Template, error) {
-
+func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
-	html := &Embed{
-		FS:  webUI,
-		Dir: dir,
-	}
-
-	uifs, err := html.Sub()
+	pages, err := fs.Glob(ui.Files, "html/pages/*.tmpl")
 	if err != nil {
-		return nil, errors.Wrap(err, "creating embed file system")
-	}
-
-	files, err := fs.ReadDir(uifs, ".")
-	if err != nil {
-		return nil, errors.Wrap(err, "reading directory from embed fs")
-	}
-
-	var pages []string
-
-	for i := range files {
-		if files[i].IsDir() {
-			continue
-		}
-		if ok, _ := path.Match("*.page.tmpl", files[i].Name()); ok {
-			pages = append(pages, files[i].Name())
-		}
+		return nil, err
 	}
 
 	for _, page := range pages {
@@ -84,19 +62,12 @@ func newTemplateCache(dir string) (map[string]*template.Template, error) {
 		name := filepath.Base(page)
 
 		// parse the page template file in to a template set
-		ts, err := template.New(name).Funcs(functions).ParseFS(uifs, page)
-		if err != nil {
-			return nil, err
+		patterns := []string{
+			"html/base.tmpl",
+			"html/partials/*.tmpl",
+			page,
 		}
-
-		// add any 'layout' templates to the template set
-		ts, err = ts.ParseFS(uifs, "*.layout.tmpl")
-		if err != nil {
-			return nil, err
-		}
-
-		// add any 'partial' templates to the template set
-		ts, err = ts.ParseFS(uifs, "*.partial.tmpl")
+		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, patterns...)
 		if err != nil {
 			return nil, err
 		}

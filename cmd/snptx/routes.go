@@ -5,6 +5,7 @@ import (
 
 	"github.com/bmizerany/pat"
 	"github.com/justinas/alice"
+	"github.com/tullo/snptx/ui"
 )
 
 func (a *app) routes() http.Handler {
@@ -36,17 +37,7 @@ func (a *app) routes() http.Handler {
 	mux.Post("/user/change-password", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.changePassword))
 
 	mux.Get("/ping", http.HandlerFunc(ping))
-
-	fs := &Embed{
-		FS:  webUI,
-		Dir: "ui/static",
-	}
-	static, err := fs.Sub()
-	if err != nil {
-		panic(err.Error())
-	}
-	fileServer := http.FileServer(http.FS(static))
-	mux.Get("/static/", http.StripPrefix("/static", fileServer))
+	mux.Get("/static/", http.FileServerFS(ui.Files))
 
 	// Flow of control (reading from left to right):
 	// standardMiddleware ↔ servemux ↔ dynamicMiddleware ↔ application handler

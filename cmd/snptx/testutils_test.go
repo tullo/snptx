@@ -37,7 +37,7 @@ func extractCSRFToken(t *testing.T, body []byte) string {
 // newTestApp creates an application struct with mock loggers
 func newTestApp(t *testing.T) *app {
 	// initialize template cache
-	templateCache, err := newTemplateCache("ui/html")
+	templateCache, err := newTemplateCache()
 	if err != nil {
 		t.Fatal(err)
 	}

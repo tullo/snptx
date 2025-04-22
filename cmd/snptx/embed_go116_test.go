@@ -8,12 +8,13 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/tullo/snptx/ui"
 )
 
 func TestEmbedHTMLTemplates(t *testing.T) {
 	html := &Embed{
-		FS:  webUI,
-		Dir: "ui/html",
+		FS:  ui.Files,
+		Dir: "html",
 	}
 	uifs, err := html.Sub()
 	if err != nil {
