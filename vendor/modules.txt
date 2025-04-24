@@ -14,8 +14,8 @@ github.com/dgrijalva/jwt-go/v4
 ## explicit; go 1.18
 github.com/georgysavva/scany/v2/dbscan
 github.com/georgysavva/scany/v2/pgxscan
-# github.com/golang-migrate/migrate/v4 v4.18.2
-## explicit; go 1.22.0
+# github.com/golang-migrate/migrate/v4 v4.18.3
+## explicit; go 1.23.0
 github.com/golang-migrate/migrate/v4
 github.com/golang-migrate/migrate/v4/database
 github.com/golang-migrate/migrate/v4/database/cockroachdb
