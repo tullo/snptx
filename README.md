@@ -2,7 +2,7 @@
 
 ![Go](https://github.com/tullo/snptx/workflows/Go/badge.svg)
 ![CodeQL](https://github.com/tullo/snptx/workflows/CodeQL/badge.svg)
-[![codecov](https://codecov.io/gh/tullo/snptx/branch/master/graph/badge.svg?token=R891ZHOLF6)](https://codecov.io/gh/tullo/snptx)
+[![codecov](https://codecov.io/gh/tullo/snptx/graph/badge.svg?token=R891ZHOLF6)](https://codecov.io/gh/tullo/snptx)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/tullo/snptx)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/tullo/snptx.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/tullo/snptx/alerts/)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/tullo/snptx.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/tullo/snptx/context:javascript)
