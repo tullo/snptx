@@ -16,9 +16,11 @@ jobs:
 
     - name: Set up Go 1.23
       uses: actions/setup-go@v5
+      id: go
       with:
         go-version: '1.24'
-      id: go
+        cache-dependency-path: |
+          go.sum
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
