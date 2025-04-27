@@ -14,13 +14,13 @@ jobs:
     # https://docs.github.com/en/actions/reference/specifications-for-github-hosted-runners
     steps:
 
-    - name: Set up Go 1.23
+    - name: Set up Go
       uses: actions/setup-go@v5
       id: go
       with:
-        go-version: '1.24'
-        cache-dependency-path: |
-          ./go.sum
+        #go-version: '1.24'
+        go-version-file: 'go.mod'
+        cache-dependency-path: 'go.sum'
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
