@@ -59,4 +59,4 @@ jobs:
     - name: Upload coverage
       uses: codecov/codecov-action@v5.4.2
       with:
-        file: coverprofile.cov
+        files: coverprofile.cov
