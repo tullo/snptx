@@ -20,7 +20,7 @@ jobs:
       with:
         go-version: '1.24'
         cache-dependency-path: |
-          go.sum
+          ./go.sum
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v4
