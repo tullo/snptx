@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/tullo/snptx/internal/models"
-	"github.com/tullo/snptx/internal/snippet"
 )
 
 var mockSnippet = &models.Snippet{
@@ -58,7 +57,7 @@ func (s SnippetStore) Update(ctx context.Context, id string, us models.UpdateSni
 	case "66":
 		return fmt.Errorf("internal server error")
 	default:
-		return snippet.ErrNotFound
+		return models.ErrNoRecord
 	}
 }
 

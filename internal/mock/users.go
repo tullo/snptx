@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/tullo/snptx/internal/models"
 	"github.com/tullo/snptx/internal/platform/auth"
-	"github.com/tullo/snptx/internal/user"
 )
 
 var mockUser = &models.User{
@@ -45,19 +44,19 @@ func (u UserStore) Authenticate(ctx context.Context, now time.Time, email, passw
 	switch email {
 	case "alice@example.com":
 		if password != "validPa$$word" {
-			return auth.Claims{}, user.ErrAuthenticationFailure
+			return auth.Claims{}, models.ErrAuthenticationFailure
 		}
 		return auth.Claims{StandardClaims: jwt.StandardClaims{Subject: "1"}}, nil
 
 	default:
-		return auth.Claims{}, user.ErrAuthenticationFailure
+		return auth.Claims{}, models.ErrAuthenticationFailure
 	}
 }
 
 // ChangePassword generates a hash based on the new password and saves it to the db.
 func (u UserStore) ChangePassword(ctx context.Context, id, currentPassword, newPassword string) error {
 	if currentPassword != "validPa$$word" {
-		return user.ErrInvalidCredentials
+		return models.ErrInvalidCredentials
 	}
 
 	return nil
@@ -77,7 +76,7 @@ func (u UserStore) Create(ctx context.Context, nu models.NewUser, now time.Time)
 // Delete removes a user from the database.
 func (u UserStore) Delete(ctx context.Context, id string) error {
 	if _, err := uuid.Parse(id); err != nil {
-		return user.ErrInvalidID
+		return models.ErrInvalidID
 	}
 
 	return nil
@@ -96,7 +95,7 @@ func (u UserStore) QueryByID(ctx context.Context, id string) (*models.User, erro
 	case "1":
 		return mockUser, nil
 	default:
-		return nil, user.ErrNotFound
+		return nil, models.ErrNoRecord
 	}
 }
 

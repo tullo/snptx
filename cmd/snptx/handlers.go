@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/tullo/snptx/internal/models"
-	"github.com/tullo/snptx/internal/user"
 	"github.com/tullo/snptx/internal/validator"
 )
 
@@ -297,7 +296,7 @@ func (a *app) userLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	claims, err := a.users.Authenticate(r.Context(), time.Now(), form.Email, form.Password)
 	if err != nil {
-		if errors.Is(err, user.ErrAuthenticationFailure) {
+		if errors.Is(err, models.ErrAuthenticationFailure) {
 			form.AddNonFieldError("Email or password is incorrect")
 
 			data := a.newTemplateData(r)
@@ -398,7 +397,7 @@ func (a *app) changePasswordPost(w http.ResponseWriter, r *http.Request) {
 	// persist the password to the database
 	err = a.users.ChangePassword(r.Context(), userID, form.CurrentPassword, form.NewPassword)
 	if err != nil {
-		if errors.Is(err, user.ErrInvalidCredentials) {
+		if errors.Is(err, models.ErrInvalidCredentials) {
 			form.AddFieldError("currentPassword", "Current password is incorrect")
 
 			data := a.newTemplateData(r)
