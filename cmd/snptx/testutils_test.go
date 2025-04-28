@@ -17,7 +17,7 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
-	"github.com/tullo/snptx/internal/mock"
+	"github.com/tullo/snptx/internal/models/mock"
 )
 
 // Capture the CSRF token value from the HTML for the user signup page
