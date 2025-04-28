@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 )
 
 type DB struct {
@@ -23,6 +25,10 @@ type Config struct {
 	Host       string
 	Name       string
 	DisableTLS bool
+}
+
+func StdLibConnection(p *pgxpool.Pool) *sql.DB {
+	return sql.OpenDB(stdlib.GetConnector(*p.Config().ConnConfig))
 }
 
 // Connect establishes a database connection based on the configuration.

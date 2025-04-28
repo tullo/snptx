@@ -3,43 +3,52 @@ package main
 import (
 	"net/http"
 
-	"github.com/bmizerany/pat"
 	"github.com/justinas/alice"
 	"github.com/tullo/snptx/ui"
 )
 
 func (a *app) routes() http.Handler {
 
-	// 'standard' middleware used for every request
-	// flow: recoverPanic ↔ logRequest ↔ secureHeaders
-	standardMiddleware := alice.New(a.recoverPanic, a.logRequest, secureHeaders)
+	mux := http.NewServeMux()
+
+	mux.Handle("GET /static/", http.FileServerFS(ui.Files))
+
+	mux.HandleFunc("GET /ping", ping)
+	// mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+	// 	http.ServeFile(w, r, "static/img/favicon.ico")
+	// })
 
 	// middleware specific to our dynamic application routes
-	dynamicMiddleware := alice.New(a.session.Enable, noSurf, a.authenticate)
+	dynamic := alice.New(a.sessionManager.LoadAndSave, noSurf, a.authenticate)
 
-	mux := pat.New()
-	mux.Get("/", dynamicMiddleware.ThenFunc(a.home))
-	mux.Get("/about", dynamicMiddleware.ThenFunc(a.about))
-	mux.Get("/snippet/create", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.createSnippetForm))
-	mux.Post("/snippet/create", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.createSnippet))
-	mux.Get("/snippet/:id", dynamicMiddleware.ThenFunc(a.showSnippet))
-	mux.Post("/snippet/:id", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.deleteSnippet))
-	mux.Get("/snippet/:id/edit", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.updateSnippetForm))
-	mux.Post("/snippet/:id/edit", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.updateSnippet))
+	mux.Handle("GET /{$}", dynamic.ThenFunc(a.home))
+	mux.Handle("GET /about", dynamic.ThenFunc(a.about))
 
-	mux.Get("/user/signup", dynamicMiddleware.ThenFunc(a.signupUserForm))
-	mux.Post("/user/signup", dynamicMiddleware.ThenFunc(a.signupUser))
-	mux.Get("/user/login", dynamicMiddleware.ThenFunc(a.loginUserForm))
-	mux.Post("/user/login", dynamicMiddleware.ThenFunc(a.loginUser))
-	mux.Post("/user/logout", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.logoutUser))
-	mux.Get("/user/profile", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.userProfile))
-	mux.Get("/user/change-password", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.changePasswordForm))
-	mux.Post("/user/change-password", dynamicMiddleware.Append(a.requireAuthentication).ThenFunc(a.changePassword))
+	mux.Handle("GET /snippet/view/{id}", dynamic.ThenFunc(a.snippetView))
 
-	mux.Get("/ping", http.HandlerFunc(ping))
-	mux.Get("/static/", http.FileServerFS(ui.Files))
+	mux.Handle("GET /user/signup", dynamic.ThenFunc(a.userSignupForm))
+	mux.Handle("POST /user/signup", dynamic.ThenFunc(a.userSignupPost))
+	mux.Handle("GET /user/login", dynamic.ThenFunc(a.loginUserForm))
+	mux.Handle("POST /user/login", dynamic.ThenFunc(a.userLoginPost))
+
+	protected := dynamic.Append(a.requireAuthentication)
+
+	mux.Handle("GET /snippet/create", protected.ThenFunc(a.snippetCreateForm))
+	mux.Handle("POST /snippet/create", protected.ThenFunc(a.snippetCreatePost))
+	mux.Handle("GET /snippet/edit/{id}", protected.ThenFunc(a.updateSnippetForm))
+	mux.Handle("POST /snippet/edit/{id}", protected.ThenFunc(a.updateSnippetPost))
+	mux.Handle("POST /snippet/delete/{id}", protected.ThenFunc(a.snippetDeletePost))
+
+	mux.Handle("GET /user/change-password", protected.ThenFunc(a.changePasswordForm))
+	mux.Handle("POST /user/change-password", protected.ThenFunc(a.changePasswordPost))
+	mux.Handle("POST /user/logout", protected.ThenFunc(a.logoutUserPost))
+	mux.Handle("GET /user/profile", protected.ThenFunc(a.userProfile))
+
+	// 'standard' middleware used for every request
+	// flow of control: recoverPanic ↔ logRequest ↔ commonHeaders
+	standard := alice.New(a.recoverPanic, a.logRequest, commonHeaders)
 
 	// Flow of control (reading from left to right):
-	// standardMiddleware ↔ servemux ↔ dynamicMiddleware ↔ application handler
-	return standardMiddleware.Then(mux)
+	// standard ↔ servemux ↔ dynamic ↔ application handler
+	return standard.Then(mux)
 }

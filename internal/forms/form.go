@@ -8,14 +8,6 @@ import (
 	"unicode/utf8"
 )
 
-// EmailRX is a regular expression for sanity check the email address format.
-// The pattern is the one currently recommended by the W3C and Web Hypertext
-// Application Technology Working Group. It is written as an interpreted string
-// literal - need to double-escape special characters in the regexp with \\
-// for it to work correctly.
-// https://html.spec.whatwg.org/multipage/input.html#valid-e-mail-address
-var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-
 // Form holds the form data and any validation errors.
 type Form struct {
 	url.Values

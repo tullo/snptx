@@ -6,11 +6,12 @@ import (
 
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/google/uuid"
+	"github.com/tullo/snptx/internal/models"
 	"github.com/tullo/snptx/internal/platform/auth"
 	"github.com/tullo/snptx/internal/user"
 )
 
-var mockUser = &user.Info{
+var mockUser = &models.User{
 	ID:          "1",
 	Name:        "Alice",
 	Email:       "alice@example.com",
@@ -18,19 +19,28 @@ var mockUser = &user.Info{
 	Active:      true,
 }
 
-// User manages the set of API's for user access. It wraps a sql.DB
+// UserStore manages the set of API's for user access. It wraps a sql.DB
 // connection pool.
-type User struct {
+type UserStore struct {
 }
 
-// NewUser constructs a User for api access.
-func NewUser() User {
-	var u User
+// NewUserStore constructs a UserStore for api access.
+func NewUserStore() UserStore {
+	var u UserStore
 	return u
 }
 
+func (u UserStore) Exists(ctx context.Context, id string) (bool, error) {
+	switch id {
+	case "1":
+		return true, nil
+	default:
+		return false, nil
+	}
+}
+
 // Authenticate finds a user by their email and verifies their password.
-func (u User) Authenticate(ctx context.Context, now time.Time, email, password string) (auth.Claims, error) {
+func (u UserStore) Authenticate(ctx context.Context, now time.Time, email, password string) (auth.Claims, error) {
 
 	switch email {
 	case "alice@example.com":
@@ -45,7 +55,7 @@ func (u User) Authenticate(ctx context.Context, now time.Time, email, password s
 }
 
 // ChangePassword generates a hash based on the new password and saves it to the db.
-func (u User) ChangePassword(ctx context.Context, id, currentPassword, newPassword string) error {
+func (u UserStore) ChangePassword(ctx context.Context, id, currentPassword, newPassword string) error {
 	if currentPassword != "validPa$$word" {
 		return user.ErrInvalidCredentials
 	}
@@ -54,18 +64,18 @@ func (u User) ChangePassword(ctx context.Context, id, currentPassword, newPasswo
 }
 
 // Create inserts a new user into the database.
-func (u User) Create(ctx context.Context, nu user.NewUser, now time.Time) (*user.Info, error) {
+func (u UserStore) Create(ctx context.Context, nu models.NewUser, now time.Time) (*models.User, error) {
 	switch nu.Email {
 	case "dupe@example.com":
-		return nil, user.ErrDuplicateEmail
+		return nil, models.ErrDuplicateEmail
 	default:
-		var usr user.Info
+		var usr models.User
 		return &usr, nil
 	}
 }
 
 // Delete removes a user from the database.
-func (u User) Delete(ctx context.Context, id string) error {
+func (u UserStore) Delete(ctx context.Context, id string) error {
 	if _, err := uuid.Parse(id); err != nil {
 		return user.ErrInvalidID
 	}
@@ -74,14 +84,14 @@ func (u User) Delete(ctx context.Context, id string) error {
 }
 
 // List retrieves a list of existing users from the database.
-func (u User) List(ctx context.Context) ([]user.Info, error) {
+func (u UserStore) List(ctx context.Context) ([]models.User, error) {
 
-	var users []user.Info
+	var users []models.User
 	return users, nil
 }
 
 // QueryByID gets the specified user from the database.
-func (u User) QueryByID(ctx context.Context, id string) (*user.Info, error) {
+func (u UserStore) QueryByID(ctx context.Context, id string) (*models.User, error) {
 	switch id {
 	case "1":
 		return mockUser, nil
@@ -91,6 +101,6 @@ func (u User) QueryByID(ctx context.Context, id string) (*user.Info, error) {
 }
 
 // Update replaces a user document in the database.
-func (u User) Update(context.Context, string, user.UpdateUser, time.Time) error {
+func (u UserStore) Update(context.Context, string, models.UpdateUser, time.Time) error {
 	return nil
 }

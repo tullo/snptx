@@ -67,11 +67,10 @@ tasks:
       - go clean -modcache
 
   deps-upgrade:
-    # -d flag ...download the source code needed to build ...
     # -t flag ...consider modules needed to build tests ...
     # -u flag ...use newer minor or patch releases when available 
     cmds:
-      - go get -d -t -u -v ./...
+      - go get -t -u -v ./...
       - defer: { task: vendor }
     silent: false
 
@@ -159,6 +158,16 @@ tasks:
     requires:
       vars: [DATABASE_URL]
     silent: true
+
+  cockroach-sql:
+    deps: [cockroach-start]
+    desc: Opens SQL shell for CockroachDB
+    cmds:
+      - ${PWD}/cockroach sql --certs-dir=certs --user=root -d snptx
+    requires:
+      vars: [DATABASE_URL]
+    silent: false
+    interactive: true
 
   go-test:
     go test -count=1 -failfast -mod=vendor -test.timeout=30s ./...

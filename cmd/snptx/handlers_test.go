@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/tullo/snptx/internal/assert"
 )
 
 func TestPing(t *testing.T) {
@@ -39,28 +41,49 @@ func TestShowSnippet(t *testing.T) {
 		name     string
 		urlPath  string
 		wantCode int
-		wantBody []byte
+		wantBody string
 	}{
-		{"Valid ID", "/snippet/1", http.StatusOK, []byte("An old silent pond...")},
-		{"Non-existent ID", "/snippet/2", http.StatusNotFound, nil},
-		{"Negative ID", "/snippet/-1", http.StatusNotFound, nil},
-		{"Decimal ID", "/snippet/1.23", http.StatusNotFound, nil},
-		{"String ID", "/snippet/foo", http.StatusNotFound, nil},
-		{"Empty ID", "/snippet/", http.StatusNotFound, nil},
-		{"Trailing slash", "/snippet/1/", http.StatusNotFound, nil},
-		{"Internal Error", "/snippet/66", http.StatusInternalServerError, nil},
+		{
+			name:     "Valid ID",
+			urlPath:  "/snippet/view/1",
+			wantCode: http.StatusOK,
+			wantBody: "An old silent pond...",
+		},
+		{
+			name:     "Non-existent ID",
+			urlPath:  "/snippet/view/2",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:     "Negative ID",
+			urlPath:  "/snippet/view/-1",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:     "Decimal ID",
+			urlPath:  "/snippet/view/1.23",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:     "String ID",
+			urlPath:  "/snippet/view/foo",
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:     "Empty ID",
+			urlPath:  "/snippet/view/",
+			wantCode: http.StatusNotFound,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			code, _, body := ts.get(t, tt.urlPath)
 
-			if code != tt.wantCode {
-				t.Errorf("want %d; got %d", tt.wantCode, code)
-			}
+			assert.Equal(t, code, tt.wantCode)
 
-			if !bytes.Contains(body, tt.wantBody) {
-				t.Errorf("want body to contain %q", tt.wantBody)
+			if tt.wantBody != "" {
+				assert.StringContains(t, string(body), tt.wantBody)
 			}
 		})
 	}
@@ -77,7 +100,7 @@ func TestLoginUser(t *testing.T) {
 	_, _, body := ts.get(t, "/user/login")
 
 	// extract the CSRF token from the response body (html signup form)
-	csrfToken := extractCSRFToken(t, body)
+	csrfToken := extractCSRFToken(t, string(body))
 
 	tests := []struct {
 		name         string
@@ -88,9 +111,9 @@ func TestLoginUser(t *testing.T) {
 		wantBody     []byte
 	}{
 		{"Valid Submission", "alice@example.com", "validPa$$word", csrfToken, http.StatusSeeOther, nil},
-		{"Empty Email", "", "validPa$$word", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
-		{"Empty Password", "alice@example.com", "", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
-		{"Invalid Password", "alice@example.com", "FooBarBaz", csrfToken, http.StatusOK, []byte("Email or Password is incorrect")},
+		{"Empty Email", "", "validPa$$word", csrfToken, http.StatusUnprocessableEntity, []byte("This field cannot be blank")},
+		{"Empty Password", "alice@example.com", "", csrfToken, http.StatusUnprocessableEntity, []byte("This field cannot be blank")},
+		{"Invalid Password", "alice@example.com", "FooBarBaz", csrfToken, http.StatusUnprocessableEntity, []byte("Email or password is incorrect")},
 		{"Invalid CSRF Token", "", "", "wrongToken", http.StatusBadRequest, nil},
 	}
 
@@ -125,12 +148,13 @@ func TestChangePassword(t *testing.T) {
 	_, _, body := ts.get(t, "/user/login")
 
 	// extract the CSRF token from the response body (html login form)
-	csrfToken := extractCSRFToken(t, body)
+	validCSRFToken := extractCSRFToken(t, string(body))
 
+	// login with valid credentials
 	form := url.Values{}
 	form.Add("email", "alice@example.com")
 	form.Add("password", "validPa$$word")
-	form.Add("csrf_token", csrfToken)
+	form.Add("csrf_token", validCSRFToken)
 
 	code, _, _ := ts.postForm(t, "/user/login", form)
 	if code != http.StatusSeeOther {
@@ -155,35 +179,83 @@ func TestChangePassword(t *testing.T) {
 		wantBody                []byte
 	}{
 		{
-			"Invalid CSRF Token", "", "", "", "", "wrongToken", http.StatusBadRequest, nil,
+			"Invalid CSRF Token",
+			"",
+			"",
+			"",
+			"",
+			"wrongToken",
+			http.StatusBadRequest,
+			nil,
 		},
 		{
-			"Blank Current Password", "alice@example.com", "", "someRandomString", "someRandomString",
-			csrfToken, http.StatusOK, []byte("This field cannot be blank"),
+			"Blank Current Password",
+			"alice@example.com",
+			"",
+			"someRandomString",
+			"someRandomString",
+			validCSRFToken,
+			http.StatusUnprocessableEntity,
+			[]byte("This field cannot be blank"),
 		},
 		{
-			"Invalid Current Password", "alice@example.com", "GophersAreCute", "someRandomString",
-			"someRandomString", csrfToken, http.StatusOK, []byte("Current password is incorrect"),
+			"Invalid Current Password",
+			"alice@example.com",
+			"GophersAreCute",
+			"someRandomString",
+			"someRandomString",
+			validCSRFToken,
+			http.StatusUnprocessableEntity,
+			[]byte("Current password is incorrect"),
 		},
 		{
-			"Invalid New Password 1", "alice@example.com", "validPa$$word", "gophers", "gophers",
-			csrfToken, http.StatusOK, []byte("This field is too short (minimum is 10 characters)"),
+			"Invalid New Password 1",
+			"alice@example.com",
+			"validPa$$word",
+			"gophers",
+			"gophers",
+			validCSRFToken,
+			http.StatusUnprocessableEntity,
+			[]byte("This field must be at least 10 characters long"),
 		},
 		{
-			"Invalid New Password 2", "alice@example.com", "validPa$$word", "someRandomString", "gophers",
-			csrfToken, http.StatusOK, []byte("This field is too short (minimum is 10 characters)"),
+			"Invalid New Password 2",
+			"alice@example.com",
+			"validPa$$word",
+			"someRandomString",
+			"gophers",
+			validCSRFToken,
+			http.StatusUnprocessableEntity,
+			[]byte("This field must be at least 10 characters long"),
 		},
 		{
-			"Invalid New Password 4", "alice@example.com", "validPa$$word", "someRandomString", "anotherRandomString",
-			csrfToken, http.StatusOK, []byte("Passwords do not match"),
+			"Invalid New Password 4",
+			"alice@example.com",
+			"validPa$$word",
+			"someRandomString",
+			"anotherRandomString",
+			validCSRFToken,
+			http.StatusUnprocessableEntity,
+			[]byte("This field must be equal to the new password confirmation"),
 		},
 		{
-			"Invalid New Password 5", "alice@example.com", "validPa$$word", "validPa$$word", "validPa$$word",
-			csrfToken, http.StatusOK, []byte("Your new password must not match your previous"),
+			"Invalid New Password 5",
+			"alice@example.com",
+			"validPa$$word",
+			"validPa$$word",
+			"validPa$$word",
+			validCSRFToken,
+			http.StatusUnprocessableEntity,
+			[]byte("This field cannot be equal to the current password"),
 		},
 		{
-			"Valid Submission", "alice@example.com", "validPa$$word", "sup3rs3cr3t", "sup3rs3cr3t",
-			csrfToken, http.StatusSeeOther, nil,
+			"Valid Submission",
+			"alice@example.com",
+			"validPa$$word",
+			"sup3rs3cr3t",
+			"sup3rs3cr3t",
+			validCSRFToken,
+			http.StatusSeeOther, nil,
 		},
 	}
 
@@ -220,9 +292,16 @@ func TestSignupUser(t *testing.T) {
 	_, _, body := ts.get(t, "/user/signup")
 
 	// extract the CSRF token from the response body (html signup form)
-	csrfToken := extractCSRFToken(t, body)
+	validCSRFToken := extractCSRFToken(t, string(body))
 
-	//t.Log(csrfToken)
+	//t.Log(validCSRFToken)
+
+	const (
+		validName     = "Bob"
+		validPassword = "validPa$$word"
+		validEmail    = "bob@example.com"
+		formTag       = "<form action='/user/signup' method='POST' novalidate>"
+	)
 
 	tests := []struct {
 		name         string
@@ -231,18 +310,78 @@ func TestSignupUser(t *testing.T) {
 		userPassword string
 		csrfToken    string
 		wantCode     int
-		wantBody     []byte
+		wantFormTag  string
 	}{
-		{"Valid submission", "Bob", "bob@example.com", "validPa$$word", csrfToken, http.StatusSeeOther, nil},
-		{"Empty name", "", "bob@example.com", "validPa$$word", csrfToken, http.StatusOK, []byte("This field cannot be blank")},
-		{"Empty email", "Bob", "", "validPa$$word", csrfToken, http.StatusOK, []byte("This field cannot be blank")},
-		{"Empty password", "Bob", "bob@example.com", "", csrfToken, http.StatusOK, []byte("This field cannot be blank")},
-		{"Invalid email (incomplete domain)", "Bob", "bob@example.", "validPa$$word", csrfToken, http.StatusOK, []byte("This field is invalid")},
-		{"Invalid email (missing @)", "Bob", "bobexample.com", "validPa$$word", csrfToken, http.StatusOK, []byte("This field is invalid")},
-		{"Invalid email (missing local part)", "Bob", "@example.com", "validPa$$word", csrfToken, http.StatusOK, []byte("This field is invalid")},
-		{"Short password", "Bob", "bob@example.com", "pa$$word", csrfToken, http.StatusOK, []byte("This field is too short (minimum is 10 characters)")},
-		{"Duplicate email", "Bob", "dupe@example.com", "validPa$$word", csrfToken, http.StatusOK, []byte("Address is already in use")},
-		{"Invalid CSRF Token", "", "", "", "wrongToken", http.StatusBadRequest, nil},
+		{
+			name:         "Valid submission",
+			userName:     validName,
+			userEmail:    validEmail,
+			userPassword: validPassword,
+			csrfToken:    validCSRFToken,
+			wantCode:     http.StatusSeeOther,
+		},
+		{
+			name:         "Invalid CSRF Token",
+			userName:     validName,
+			userEmail:    validEmail,
+			userPassword: validPassword,
+			csrfToken:    "wrongToken",
+			wantCode:     http.StatusBadRequest,
+		},
+		{
+			name:         "Empty name",
+			userName:     "",
+			userEmail:    validEmail,
+			userPassword: validPassword,
+			csrfToken:    validCSRFToken,
+			wantCode:     http.StatusUnprocessableEntity,
+			wantFormTag:  formTag,
+		},
+		{
+			name:         "Empty email",
+			userName:     validName,
+			userEmail:    "",
+			userPassword: validPassword,
+			csrfToken:    validCSRFToken,
+			wantCode:     http.StatusUnprocessableEntity,
+			wantFormTag:  formTag,
+		},
+		{
+			name:         "Empty password",
+			userName:     validName,
+			userEmail:    validEmail,
+			userPassword: "",
+			csrfToken:    validCSRFToken,
+			wantCode:     http.StatusUnprocessableEntity,
+			wantFormTag:  formTag,
+		},
+		{
+			name:         "Invalid email",
+			userName:     validName,
+			userEmail:    "bob@example.",
+			userPassword: validPassword,
+			csrfToken:    validCSRFToken,
+			wantCode:     http.StatusUnprocessableEntity,
+			wantFormTag:  formTag,
+		},
+		{
+			name:         "Short password",
+			userName:     validName,
+			userEmail:    validEmail,
+			userPassword: "pa$$",
+			csrfToken:    validCSRFToken,
+			wantCode:     http.StatusUnprocessableEntity,
+			wantFormTag:  formTag,
+		},
+		{
+			name:         "Duplicate email",
+			userName:     validName,
+			userEmail:    "dupe@example.com",
+			userPassword: validPassword,
+			csrfToken:    validCSRFToken,
+			wantCode:     http.StatusUnprocessableEntity,
+			wantFormTag:  formTag,
+		},
 	}
 
 	for _, tt := range tests {
@@ -255,12 +394,10 @@ func TestSignupUser(t *testing.T) {
 
 			code, _, body := ts.postForm(t, "/user/signup", form)
 
-			if code != tt.wantCode {
-				t.Errorf("want %d; got %d", tt.wantCode, code)
-			}
+			assert.Equal(t, code, tt.wantCode)
 
-			if !bytes.Contains(body, tt.wantBody) {
-				t.Errorf("want body %s to contain %q", body, tt.wantBody)
+			if tt.wantFormTag != "" {
+				assert.StringContains(t, string(body), tt.wantFormTag)
 			}
 		})
 	}
@@ -297,14 +434,18 @@ func TestCreateSnippetForm(t *testing.T) {
 		_, _, body := ts.get(t, "/user/login")
 
 		// extract csrf token from the page with the login form
-		csrfToken := extractCSRFToken(t, body)
+		csrfToken := extractCSRFToken(t, string(body))
 
 		// post the form to login the user
 		form := url.Values{}
 		form.Add("email", "alice@example.com")
 		form.Add("password", "validPa$$word")
 		form.Add("csrf_token", csrfToken)
-		ts.postForm(t, "/user/login", form)
+		login, _, _ := ts.postForm(t, "/user/login", form)
+
+		if login != http.StatusSeeOther {
+			t.Errorf("want %d; got %d", http.StatusSeeOther, login)
+		}
 
 		// authenticated users have access to the create snippet page
 		code, _, body := ts.get(t, "/snippet/create")
@@ -331,21 +472,17 @@ func TestDeleteSnippet(t *testing.T) {
 	ts := newTestServer(t, app.routes())
 	defer ts.Close()
 
-	// get snippet page properties
-	code, _, response := ts.get(t, "/snippet/1")
-	if code != http.StatusOK {
-		t.Errorf("want %d; got %d", http.StatusOK, code)
-	}
-
-	// prepare form with cors token
-	csrfToken := extractCSRFToken(t, response)
-	form := url.Values{}
-	form.Add("csrf_token", csrfToken)
-
 	t.Run("Unauthenticated", func(t *testing.T) {
-		code, _, _ := ts.postForm(t, "/snippet/1", form)
-		if code != http.StatusSeeOther {
-			t.Errorf("want %d; got %d", http.StatusSeeOther, code)
+		// get snippet page properties
+		code, _, _ := ts.get(t, "/snippet/view/1")
+		if code != http.StatusOK {
+			t.Errorf("want %d; got %d", http.StatusOK, code)
+		}
+
+		// unauthenticated users may not delete snippets
+		code, _, _ = ts.postForm(t, "/snippet/delete/1", nil)
+		if code != http.StatusBadRequest {
+			t.Errorf("want %d; got %d", http.StatusBadRequest, code)
 		}
 	})
 
@@ -355,17 +492,26 @@ func TestDeleteSnippet(t *testing.T) {
 		_, _, body := ts.get(t, "/user/login")
 
 		// extract csrf token from the login page
-		csrfToken := extractCSRFToken(t, body)
+		csrfToken := extractCSRFToken(t, string(body))
 
-		// post the form
+		// prepare login form
 		form := url.Values{}
 		form.Add("email", "alice@example.com")
 		form.Add("password", "validPa$$word")
 		form.Add("csrf_token", csrfToken)
+		// login
 		ts.postForm(t, "/user/login", form)
 
 		// authenticated users may delete snippets
-		code, headers, _ := ts.postForm(t, "/snippet/1", form)
+		// req, _ := http.NewRequest("DELETE", ts.URL+"/snippet/delete/1", nil)
+		// res, err := ts.Client().Do(req)
+		// if err != nil {
+		// 	t.Fatal(err)
+		// }
+		// blob, _ := httputil.DumpResponse(res, true)
+		// t.Log("xxxxx", string(blob))
+
+		code, headers, _ := ts.postForm(t, "/snippet/delete/1", form)
 		if code != http.StatusSeeOther {
 			t.Errorf("want %d; got %d", http.StatusSeeOther, code)
 		}

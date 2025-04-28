@@ -6,232 +6,277 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/justinas/nosurf"
-	"github.com/tullo/snptx/internal/forms"
-	"github.com/tullo/snptx/internal/snippet"
+	"github.com/tullo/snptx/internal/models"
 	"github.com/tullo/snptx/internal/user"
+	"github.com/tullo/snptx/internal/validator"
 )
 
 func (a *app) home(w http.ResponseWriter, r *http.Request) {
-	s, err := a.snippets.Latest(r.Context())
+	ss, err := a.snippets.Latest(r.Context())
 	if err != nil {
-		a.serverError(w, err)
+		a.serverError(w, r, err)
 		return
 	}
 
-	a.render(w, r, "home.page.tmpl", &templateData{
-		Snippets: s,
-	})
+	data := a.newTemplateData(r)
+	data.Snippets = ss
+
+	a.render(w, r, http.StatusOK, "home.tmpl", data)
 }
 
 func (a *app) about(w http.ResponseWriter, r *http.Request) {
-	a.render(w, r, "about.page.tmpl", &templateData{})
+	data := a.newTemplateData(r)
+	a.render(w, r, http.StatusOK, "about.tmpl", data)
 }
 
-func (a *app) deleteSnippet(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get(":id")
+func (a *app) snippetDeletePost(w http.ResponseWriter, r *http.Request) {
+	//id := r.URL.Query().Get(":id")
+	id := r.PathValue("id")
 	err := a.snippets.Delete(r.Context(), id)
 	if err != nil {
-		a.serverError(w, err)
+		a.serverError(w, r, err)
 		return
 	}
-	a.session.Put(r, "flash", "Snippet successfully deleted!")
+	a.sessionManager.Put(r.Context(), "flash", "Snippet successfully deleted!")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (a *app) showSnippet(w http.ResponseWriter, r *http.Request) {
+func (a *app) snippetView(w http.ResponseWriter, r *http.Request) {
 	// pat does not strip the colon from the named capture key,
 	// get the value of ":id" from the query string instead of "id"
-	id := r.URL.Query().Get(":id")
+	//id := r.URL.Query().Get(":id")
+	id := r.PathValue("id")
 	s, err := a.snippets.Retrieve(r.Context(), id)
 	if err != nil {
 		// unwrapping errors
-		if errors.Is(err, snippet.ErrNotFound) {
+		if errors.Is(err, models.ErrNoRecord) {
 			a.notFound(w)
 		} else {
-			a.serverError(w, err)
+			a.serverError(w, r, err)
 		}
 		return
 	}
 
-	a.render(w, r, "show.page.tmpl", &templateData{
-		Snippet:   s,
-		CSRFToken: nosurf.Token(r),
-	})
+	data := a.newTemplateData(r)
+	data.Snippet = s
+
+	a.render(w, r, http.StatusOK, "view.tmpl", data)
+}
+
+type snippetEditForm struct {
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	validator.Validator `form:"-"`
 }
 
 func (a *app) updateSnippetForm(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get(":id")
+	//id := r.URL.Query().Get(":id")
+	id := r.PathValue("id")
 	s, err := a.snippets.Retrieve(r.Context(), id)
 	if err != nil {
 		// unwrapping errors
-		if errors.Is(err, snippet.ErrNotFound) {
+		if errors.Is(err, models.ErrNoRecord) {
 			a.notFound(w)
 		} else {
-			a.serverError(w, err)
+			a.serverError(w, r, err)
 		}
 		return
 	}
 
-	data := make(map[string][]string)
-	data["title"] = append(data["title"], s.Title)
-	data["content"] = append(data["content"], s.Content)
+	data := a.newTemplateData(r)
+	data.Snippet = s
+	data.Form = snippetEditForm{
+		Title:   s.Title,
+		Content: s.Content,
+	}
 
-	a.render(w, r, "edit.page.tmpl", &templateData{
-		Snippet: &snippet.Info{ID: id},
-		Form:    forms.New(data),
-	})
+	a.render(w, r, http.StatusOK, "edit.tmpl", data)
 }
 
-func (a *app) updateSnippet(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get(":id")
-	err := r.ParseForm()
+func (a *app) updateSnippetPost(w http.ResponseWriter, r *http.Request) {
+
+	var form snippetEditForm
+
+	err := a.decodePostForm(r, &form)
 	if err != nil {
 		a.clientError(w, http.StatusBadRequest)
 		return
 	}
-	form := forms.New(r.PostForm)
-	form.Required("title", "content")
-	form.MaxLength("title", 100)
+
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+
 	if !form.Valid() {
-		a.render(w, r, "edit.page.tmpl", &templateData{
-			Snippet: &snippet.Info{ID: id},
-			Form:    form})
+		data := a.newTemplateData(r)
+		data.Form = form
+		a.render(w, r, http.StatusUnprocessableEntity, "edit.tmpl", data)
 		return
 	}
+
 	// update snippet record in the database using the form data
-	t := form.Get("title")
-	c := form.Get("content")
-	up := snippet.UpdateSnippet{
-		Title:   &t,
-		Content: &c,
+	up := models.UpdateSnippet{
+		Title:   &form.Title,
+		Content: &form.Content,
 	}
 
-	err = a.snippets.Update(r.Context(), id, up, time.Now())
+	id := r.PathValue("id")
+	err = a.snippets.Update(r.Context(), id, up, time.Now().Local())
 	if err != nil {
-		a.serverError(w, err)
+		a.serverError(w, r, err)
 		return
 	}
-	a.session.Put(r, "flash", "Snippet successfully updated!")
-	http.Redirect(w, r, fmt.Sprintf("/snippet/%s", id), http.StatusSeeOther)
+	a.sessionManager.Put(r.Context(), "flash", "Snippet successfully updated!")
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%s", id), http.StatusSeeOther)
 }
 
-func (a *app) createSnippetForm(w http.ResponseWriter, r *http.Request) {
+type snippetCreateForm struct {
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
+}
+
+func (a *app) snippetCreateForm(w http.ResponseWriter, r *http.Request) {
 	// render the form using an empty forms.Form struct
-	a.render(w, r, "create.page.tmpl", &templateData{
-		Form: forms.New(nil),
-	})
+	data := a.newTemplateData(r)
+
+	data.Form = snippetCreateForm{
+		Expires: 365,
+	}
+
+	a.render(w, r, http.StatusOK, "create.tmpl", data)
 }
 
-func (a *app) createSnippet(w http.ResponseWriter, r *http.Request) {
+func (a *app) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
+	var form snippetCreateForm
 
-	// add data in POST request body to the r.PostForm map
-	err := r.ParseForm()
+	err := a.decodePostForm(r, &form)
 	if err != nil {
-		// no body, or body is too large to process
 		a.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	// create a new forms.Form struct containing the POSTed data,
-	// then use the validation methods to check the content.
-	form := forms.New(r.PostForm)
-	form.Required("title", "content", "expires")
-	form.MaxLength("title", 100)
-	form.PermittedValues("expires", "365", "7", "1")
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+	form.CheckField(validator.PermittedValue(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365")
 
-	// if the form is not valid, redisplay the template passing in the parsed data.
 	if !form.Valid() {
-		a.render(w, r, "create.page.tmpl", &templateData{Form: form})
+		data := a.newTemplateData(r)
+		data.Form = form
+		a.render(w, r, http.StatusUnprocessableEntity, "create.tmpl", data)
 		return
 	}
 
 	now := time.Now()
 	var exp time.Time
-	switch form.Get("expires") {
-	case "365":
+	switch form.Expires {
+	case 365:
 		exp = now.AddDate(1, 0, 0)
-	case "7":
+	case 7:
 		exp = now.AddDate(0, 0, 7)
-	case "1":
-		exp = now.AddDate(0, 0, 7)
+	case 1:
+		exp = now.AddDate(0, 0, 1)
 	}
-	ns := snippet.NewSnippet{
-		Title:       form.Get("title"),
-		Content:     form.Get("content"),
+	ns := models.NewSnippet{
+		Title:       form.Title,
+		Content:     form.Content,
 		DateExpires: exp,
 	}
 
 	// create a new snippet record in the database using the form data
 	spt, err := a.snippets.Create(r.Context(), ns, now)
 	if err != nil {
-		a.serverError(w, err)
+		a.serverError(w, r, err)
 		return
 	}
 
 	// add flash message to the user session
-	a.session.Put(r, "flash", "Snippet successfully created!")
+	a.sessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
 
 	// redirect the user to the relevant page for the snippet.
-	http.Redirect(w, r, fmt.Sprintf("/snippet/%s", spt.ID), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%s", spt.ID), http.StatusSeeOther)
 }
 
-func (a *app) signupUserForm(w http.ResponseWriter, r *http.Request) {
-	a.render(w, r, "signup.page.tmpl", &templateData{
-		Form: forms.New(nil),
-	})
+type userSignupForm struct {
+	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"-"`
 }
 
-func (a *app) signupUser(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+func (a *app) userSignupForm(w http.ResponseWriter, r *http.Request) {
+	data := a.newTemplateData(r)
+	data.Form = userSignupForm{}
+	a.render(w, r, http.StatusOK, "signup.tmpl", data)
+}
+
+func (a *app) userSignupPost(w http.ResponseWriter, r *http.Request) {
+	var form userSignupForm
+
+	err := a.decodePostForm(r, &form)
 	if err != nil {
 		a.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	form := forms.New(r.PostForm)
-	form.Required("name", "email", "password")
-	form.MaxLength("name", 255)
-	form.MaxLength("email", 255)
-	form.MatchesPattern("email", forms.EmailRX)
-	form.MinLength("password", 10)
+	form.CheckField(validator.NotBlank(form.Name), "name", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 10), "password", "This field must be at least 10 characters long")
 
 	if !form.Valid() {
-		a.render(w, r, "signup.page.tmpl", &templateData{Form: form})
+		data := a.newTemplateData(r)
+		data.Form = form
+		a.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl", data)
 		return
 	}
 
-	nu := user.NewUser{
-		Email:    form.Get("email"),
-		Name:     form.Get("name"),
-		Password: form.Get("password"),
+	nu := models.NewUser{
+		Email:    form.Email,
+		Name:     form.Name,
+		Password: form.Password,
 	}
 	_, err = a.users.Create(r.Context(), nu, time.Now())
 	if err != nil {
-		if errors.Is(err, user.ErrDuplicateEmail) {
-			form.Errors.Add("email", "Address is already in use")
-			a.render(w, r, "signup.page.tmpl", &templateData{Form: form})
+		if errors.Is(err, models.ErrDuplicateEmail) {
+			form.AddFieldError("email", "Email address is already in use")
+
+			data := a.newTemplateData(r)
+			data.Form = form
+			a.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl", data)
 		} else {
-			a.serverError(w, err)
+			a.serverError(w, r, err)
 		}
+
 		return
 	}
 
-	a.session.Put(r, "flash", "Your signup was successful. Please log in.")
+	a.sessionManager.Put(r.Context(), "flash", "Your signup was successful. Please log in.")
 
 	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
 
-func (a *app) loginUserForm(w http.ResponseWriter, r *http.Request) {
-	a.render(w, r, "login.page.tmpl", &templateData{
-		Form: forms.New(nil),
-	})
+type userLoginForm struct {
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"-"`
 }
 
-// loginUser checks the provided credentials and redirects the client to the
-// requested path
-func (a *app) loginUser(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+func (a *app) loginUserForm(w http.ResponseWriter, r *http.Request) {
+	data := a.newTemplateData(r)
+	data.Form = userLoginForm{}
+	a.render(w, r, http.StatusOK, "login.tmpl", data)
+}
+
+// userLoginPost checks the provided credentials and
+// redirects the client to the requested path
+func (a *app) userLoginPost(w http.ResponseWriter, r *http.Request) {
+	var form userLoginForm
+
+	err := a.decodePostForm(r, &form)
 	if err != nil {
 		a.clientError(w, http.StatusBadRequest)
 		return
@@ -239,23 +284,42 @@ func (a *app) loginUser(w http.ResponseWriter, r *http.Request) {
 
 	// Check whether the credentials are valid. If they're not, add a generic error
 	// message to the form failures map and re-display the login page.
-	form := forms.New(r.PostForm)
-	claims, err := a.users.Authenticate(r.Context(), time.Now(), form.Get("email"), form.Get("password"))
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+
+	if !form.Valid() {
+		data := a.newTemplateData(r)
+		data.Form = form
+		a.render(w, r, http.StatusUnprocessableEntity, "login.tmpl", data)
+		return
+	}
+
+	claims, err := a.users.Authenticate(r.Context(), time.Now(), form.Email, form.Password)
 	if err != nil {
 		if errors.Is(err, user.ErrAuthenticationFailure) {
-			form.Errors.Add("generic", "Email or Password is incorrect")
-			a.render(w, r, "login.page.tmpl", &templateData{Form: form})
-			return
+			form.AddNonFieldError("Email or password is incorrect")
+
+			data := a.newTemplateData(r)
+			data.Form = form
+			a.render(w, r, http.StatusUnprocessableEntity, "login.tmpl", data)
+		} else {
+			a.serverError(w, r, err)
 		}
-		a.serverError(w, err)
+		return
+	}
+
+	err = a.sessionManager.RenewToken(r.Context())
+	if err != nil {
+		a.serverError(w, r, err)
 		return
 	}
 
 	// Add the ID of the current user to the session data (user loged in)
-	a.session.Put(r, "authenticatedUserID", claims.Subject)
+	a.sessionManager.Put(r.Context(), "authenticatedUserID", claims.Subject)
 
 	// pop the captured path from the session data
-	path := a.session.PopString(r, "redirectPathAfterLogin")
+	path := a.sessionManager.PopString(r.Context(), "redirectPathAfterLogin")
 	if path != "" {
 		http.Redirect(w, r, path, http.StatusSeeOther)
 		return
@@ -265,77 +329,89 @@ func (a *app) loginUser(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
 }
 
-func (a *app) logoutUser(w http.ResponseWriter, r *http.Request) {
+func (a *app) logoutUserPost(w http.ResponseWriter, r *http.Request) {
 	// remove authenticatedUserID from the session data (user logged out)
-	a.session.Remove(r, "authenticatedUserID")
+	a.sessionManager.Remove(r.Context(), "authenticatedUserID")
 	// add flash message to the user session
-	a.session.Put(r, "flash", "You've been logged out successfully!")
+	a.sessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (a *app) userProfile(w http.ResponseWriter, r *http.Request) {
 	// get user ID from session data
-	userID := a.session.GetString(r, "authenticatedUserID")
+	userID := a.sessionManager.GetString(r.Context(), "authenticatedUserID")
 
 	// retreive user details from the database
 	usr, err := a.users.QueryByID(r.Context(), userID)
 	if err != nil {
-		a.serverError(w, err)
+		a.serverError(w, r, err)
 		return
 	}
 	//fmt.Fprintf(w, "%+v", user)
-	a.render(w, r, "profile.page.tmpl", &templateData{
-		User: usr,
-	})
 
+	data := a.newTemplateData(r)
+	data.User = usr
+
+	a.render(w, r, http.StatusOK, "profile.tmpl", data)
+}
+
+type changePasswordForm struct {
+	CurrentPassword         string `form:"currentPassword"`
+	NewPassword             string `form:"newPassword"`
+	NewPasswordConfirmation string `form:"newPasswordConfirmation"`
+	validator.Validator     `form:"-"`
 }
 
 func (a *app) changePasswordForm(w http.ResponseWriter, r *http.Request) {
-	a.render(w, r, "password.page.tmpl", &templateData{
-		Form: forms.New(nil),
-	})
+	data := a.newTemplateData(r)
+	data.Form = changePasswordForm{}
+	a.render(w, r, http.StatusOK, "password.tmpl", data)
 }
 
-func (a *app) changePassword(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+func (a *app) changePasswordPost(w http.ResponseWriter, r *http.Request) {
+	var form changePasswordForm
+
+	err := a.decodePostForm(r, &form)
 	if err != nil {
 		a.clientError(w, http.StatusBadRequest)
 		return
 	}
 
-	form := forms.New(r.PostForm)
-	form.Required("currentPassword", "newPassword", "newPasswordConfirmation")
-	form.MinLength("newPassword", 10)
-	form.MinLength("newPasswordConfirmation", 10)
-	if form.Get("newPassword") != form.Get("newPasswordConfirmation") {
-		form.Errors.Add("newPasswordConfirmation", "Passwords do not match")
-	}
-	if form.Get("currentPassword") == form.Get("newPassword") {
-		form.Errors.Add("newPassword", "Your new password must not match your previous")
-	}
+	form.CheckField(validator.NotBlank(form.CurrentPassword), "currentPassword", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.NewPassword), "newPassword", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.NewPasswordConfirmation), "newPasswordConfirmation", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.NewPassword, 10), "newPassword", "This field must be at least 10 characters long")
+	form.CheckField(validator.MinChars(form.NewPasswordConfirmation, 10), "newPasswordConfirmation", "This field must be at least 10 characters long")
+	form.CheckField(validator.Equals(form.NewPassword, form.NewPasswordConfirmation), "newPassword", "This field must be equal to the new password confirmation")
+	form.CheckField(!validator.Equals(form.NewPassword, form.CurrentPassword), "newPassword", "This field cannot be equal to the current password")
 
 	if !form.Valid() {
-		a.render(w, r, "password.page.tmpl", &templateData{Form: form})
+		data := a.newTemplateData(r)
+		data.Form = form
+		a.render(w, r, http.StatusUnprocessableEntity, "password.tmpl", data)
 		return
 	}
 
 	// get user ID from session data
-	userID := a.session.GetString(r, "authenticatedUserID")
+	userID := a.sessionManager.GetString(r.Context(), "authenticatedUserID")
 
 	// persist the password to the database
-	err = a.users.ChangePassword(r.Context(), userID, form.Get("currentPassword"), form.Get("newPassword"))
+	err = a.users.ChangePassword(r.Context(), userID, form.CurrentPassword, form.NewPassword)
 	if err != nil {
 		if errors.Is(err, user.ErrInvalidCredentials) {
-			form.Errors.Add("currentPassword", "Current password is incorrect")
-			a.render(w, r, "password.page.tmpl", &templateData{Form: form})
-		} else if err != nil {
-			a.serverError(w, err)
+			form.AddFieldError("currentPassword", "Current password is incorrect")
+
+			data := a.newTemplateData(r)
+			data.Form = form
+			a.render(w, r, http.StatusUnprocessableEntity, "password.tmpl", data)
 		}
+
+		a.serverError(w, r, err)
 		return
 	}
 
 	// add flash message to the session data
-	a.session.Put(r, "flash", "Your password has been updated!")
+	a.sessionManager.Put(r.Context(), "flash", "Your password has been updated!")
 	// redirect browser to the users profile page
 	http.Redirect(w, r, "/user/profile", http.StatusSeeOther)
 }

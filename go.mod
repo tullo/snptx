@@ -6,11 +6,12 @@ toolchain go1.24.2
 
 require (
 	github.com/alexedwards/argon2id v1.0.0
-	github.com/bmizerany/pat v0.0.0-20210406213842-e4b6760bdd6f
+	github.com/alexedwards/scs/postgresstore v0.0.0-20250417082927-ab20b3feb5e9
+	github.com/alexedwards/scs/v2 v2.8.0
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/georgysavva/scany/v2 v2.1.4
+	github.com/go-playground/form/v4 v4.2.1
 	github.com/golang-migrate/migrate/v4 v4.18.3
-	github.com/golangcollege/sessions v1.2.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.4

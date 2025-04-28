@@ -6,7 +6,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"fmt"
 	"html/template"
 	"log"
@@ -16,46 +15,29 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/golangcollege/sessions"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/form/v4"
 	"github.com/pkg/errors"
 	"github.com/tullo/conf"
-	"github.com/tullo/snptx/internal/platform/auth"
+	"github.com/tullo/snptx/internal/models"
 	"github.com/tullo/snptx/internal/platform/database"
 	"github.com/tullo/snptx/internal/platform/sec"
-	"github.com/tullo/snptx/internal/snippet"
-	"github.com/tullo/snptx/internal/user"
 )
 
 // build is the git version of this application. It is set using build flags in the makefile.
 var build = "develop"
 
-// the key must be unexported type to avoid collisions
-type contextKey string
-
-const contextKeyIsAuthenticated = contextKey("isAuthenticated")
-
-// define the interfaces inline to keep the code simple
 type app struct {
-	debug    bool
-	log      *log.Logger
-	session  *sessions.Session
-	shutdown chan os.Signal
-	snippets interface {
-		Create(context.Context, snippet.NewSnippet, time.Time) (*snippet.Info, error)
-		Delete(context.Context, string) error
-		Latest(context.Context) ([]snippet.Info, error)
-		Update(context.Context, string, snippet.UpdateSnippet, time.Time) error
-		Retrieve(context.Context, string) (*snippet.Info, error)
-	}
-	templateCache map[string]*template.Template
-	users         interface {
-		Authenticate(context.Context, time.Time, string, string) (auth.Claims, error)
-		Create(context.Context, user.NewUser, time.Time) (*user.Info, error)
-		ChangePassword(context.Context, string, string, string) error
-		QueryByID(context.Context, string) (*user.Info, error)
-	}
-	version string
-	year    int
+	debug          bool
+	log            *log.Logger
+	snippets       models.SnippetModelInterface
+	users          models.UserModelInterface
+	templateCache  map[string]*template.Template
+	formDecoder    *form.Decoder
+	sessionManager *scs.SessionManager
+	shutdown       chan os.Signal
+	version        string
+	year           int
 }
 
 // SignalShutdown is used to gracefully shutdown the app when an integrity
@@ -67,8 +49,10 @@ func (a *app) SignalShutdown() {
 func main() {
 	log := log.New(os.Stdout, "SNPTX : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
 
+	models.LoadLocation()
+
 	if err := run(log); err != nil {
-		log.Println("main: error:", err)
+		log.Println("main: error:", err.Error())
 		os.Exit(1)
 	}
 }
@@ -167,48 +151,39 @@ func run(log *log.Logger) error {
 		return errors.Wrap(err, "creating template cache")
 	}
 
-	decoded, err := base64.StdEncoding.DecodeString(cfg.Web.SessionSecret)
-	if err != nil {
-		return errors.Wrap(err, "decoding session secret")
-	}
-	if len(decoded) != 32 {
-		return errors.New("session secret must be exactly 32 bytes long")
-	}
-
-	// sessions expire after 12 hours
-	session := sessions.New(decoded)
-	session.Lifetime = 12 * time.Hour
-	// set the secure flag on session cookies and
-	// serve all requests over https in production environment
-	session.Secure = true
-	session.SameSite = http.SameSiteStrictMode
-
 	// make a channel to listen for an interrupt or terminate signal from the OS.
 	// use a buffered channel because the signal package requires it.
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
 	db := database.DB{Pool: pool}
-	snippets := snippet.NewStore(&db)
-	users := user.NewStore(&db, sec.Params(hp))
+	snippets := models.NewSnippetStore(&db)
+	users := models.NewUserStore(&db, sec.Params(hp))
+
+	formDecoder := form.NewDecoder()
+
+	sessionManager := scs.New()
+	sessionManager.Store = models.NewSessionsStore(&db)
+	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true
 
 	app := &app{
-		debug:         cfg.Web.DebugMode,
-		log:           log,
-		session:       session,
-		shutdown:      shutdown,
-		snippets:      snippets,
-		templateCache: templateCache,
-		users:         users,
-		version:       build,
-		year:          time.Now().Year(),
+		debug:          cfg.Web.DebugMode,
+		formDecoder:    formDecoder,
+		log:            log,
+		sessionManager: sessionManager,
+		shutdown:       shutdown,
+		snippets:       snippets,
+		templateCache:  templateCache,
+		users:          users,
+		version:        build,
+		year:           time.Now().Year(),
 	}
 
 	// use Go’s favored cipher suites (support for forward secrecy)
 	// and elliptic curves that are performant under heavy loads
 	tlsConfig := &tls.Config{
-		PreferServerCipherSuites: true,
-		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
 	}
 
 	srv := &http.Server{

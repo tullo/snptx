@@ -15,23 +15,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golangcollege/sessions"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-playground/form/v4"
 	"github.com/tullo/snptx/internal/mock"
 )
 
 // Capture the CSRF token value from the HTML for the user signup page
-var csrfTokenRX = regexp.MustCompile(`<input type="hidden" name="csrf_token" value="(.+)">`)
+var csrfTokenRX = regexp.MustCompile(`<input type='hidden' name='csrf_token' value='(.+)'>`)
 
-func extractCSRFToken(t *testing.T, body []byte) string {
+func extractCSRFToken(t *testing.T, body string) string {
 	// extract the token from the HTML body
-	matches := csrfTokenRX.FindSubmatch(body)
+	matches := csrfTokenRX.FindStringSubmatch(body)
 	// expecting an array with at least two entries (matched pattern & captured data)
 	if len(matches) < 2 {
 		t.Fatal("no csrf token found in body")
 	}
 
 	// unescape the rendered and html escaped base64 encoded string value
-	return html.UnescapeString(string(matches[1]))
+	return html.UnescapeString(matches[1])
 }
 
 // newTestApp creates an application struct with mock loggers
@@ -42,29 +43,26 @@ func newTestApp(t *testing.T) *app {
 		t.Fatal(err)
 	}
 
-	// session manager instance that mirrors production settings
-	// sample generation of secret bytes 'openssl rand -base64 32'
-	session := sessions.New([]byte("zBtjT1J8wWrvUCuEZf+YbBa41nKYlCKiNLeS5AGdmiQ="))
-	// sessions expire after 12 hours
-	session.Lifetime = 12 * time.Hour
-	// set the secure flag on session cookies
-	session.Secure = true
-	// mitigate cross site request forgry csrf
-	session.SameSite = http.SameSiteStrictMode
-
 	shutdown := make(chan os.Signal, 1)
 	signal.Notify(shutdown, os.Interrupt, syscall.SIGTERM)
 
+	formDecoder := form.NewDecoder()
+
+	sessionManager := scs.New()
+	sessionManager.Lifetime = 12 * time.Hour
+	sessionManager.Cookie.Secure = true
+
 	// app struct instantiation using the mocks for the loggers and database models
 	return &app{
-		log:           log.New(io.Discard, "", 0),
-		debug:         false,
-		session:       session,
-		shutdown:      shutdown,
-		snippets:      mock.NewSnippet(),
-		templateCache: templateCache,
-		users:         mock.NewUser(),
-		version:       "develop",
+		log:            log.New(io.Discard, "", 0),
+		debug:          false,
+		formDecoder:    formDecoder,
+		sessionManager: sessionManager,
+		shutdown:       shutdown,
+		snippets:       mock.NewSnippetStore(),
+		templateCache:  templateCache,
+		users:          mock.NewUserStore(),
+		version:        "develop",
 	}
 }
 

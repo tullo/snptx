@@ -2,19 +2,22 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
-
-	"github.com/tullo/snptx/internal/user"
 
 	"github.com/justinas/nosurf"
 )
 
-func secureHeaders(next http.Handler) http.Handler {
+func commonHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com")
+
+		w.Header().Set("Referrer-Policy", "origin-when-cross-origin")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "deny")
+		w.Header().Set("X-XSS-Protection", "0")
+
+		w.Header().Set("Server", "Go")
 
 		next.ServeHTTP(w, r)
 	})
@@ -34,7 +37,14 @@ func noSurf(next http.Handler) http.Handler {
 
 func (a *app) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.log.Printf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
+		var (
+			ip     = r.RemoteAddr
+			proto  = r.Proto
+			method = r.Method
+			uri    = r.URL.RequestURI()
+		)
+
+		a.log.Printf("%s - %s %s %s", ip, proto, method, uri)
 
 		next.ServeHTTP(w, r)
 	})
@@ -51,7 +61,7 @@ func (a *app) recoverPanic(next http.Handler) http.Handler {
 				// after a response has been sent.
 				w.Header().Set("Connection", "close")
 				// format error with default textual representation
-				a.serverError(w, fmt.Errorf("%s", err))
+				a.serverError(w, r, fmt.Errorf("%s", err))
 			}
 		}()
 
@@ -63,8 +73,6 @@ func (a *app) recoverPanic(next http.Handler) http.Handler {
 func (a *app) requireAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !a.isAuthenticated(r) {
-			// add the path the user is trying to access to session data
-			a.session.Put(r, "redirectPathAfterLogin", r.URL.Path)
 			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 			return
 		}
@@ -80,44 +88,23 @@ func (a *app) requireAuthentication(next http.Handler) http.Handler {
 func (a *app) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// check if user is logged in
-		exists := a.session.Exists(r, "authenticatedUserID")
-		if !exists {
+		id := a.sessionManager.GetString(r.Context(), "authenticatedUserID")
+		if len(id) == 0 {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		uid := a.session.GetString(r, "authenticatedUserID")
-		if len(uid) == 0 {
-			// clean up user session state
-			a.session.Remove(r, "authenticatedUserID")
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// lookup user with id from users session data
-		usr, err := a.users.QueryByID(r.Context(), uid)
-		if errors.Is(err, user.ErrNotFound) {
-			// remove session key if no records found
-			a.session.Remove(r, "authenticatedUserID")
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		if usr != nil && !usr.Active {
-			// remove session key if user record is in deactivated state
-			a.session.Remove(r, "authenticatedUserID")
-			next.ServeHTTP(w, r)
-			return
-		}
-
+		exists, err := a.users.Exists(r.Context(), id)
 		if err != nil {
-			a.serverError(w, err)
+			a.serverError(w, r, err)
 			return
 		}
 
-		// request is coming from an authenticated & 'active' user,
-		// add key/value pair to the request context - to be used further down the chain
-		ctx := context.WithValue(r.Context(), contextKeyIsAuthenticated, true)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		if exists {
+			ctx := context.WithValue(r.Context(), isAuthenticatedContextKey, true)
+			r = r.WithContext(ctx)
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }

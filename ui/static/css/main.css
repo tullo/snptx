@@ -41,6 +41,7 @@ h1 a {
 
 h1 a:hover {
     text-decoration: none;
+    background-color: orange;
     color: #34495E;
 }
 
@@ -126,7 +127,8 @@ nav a.live {
 }
 
 nav a.live:hover {
-    color: #000;
+    background-color: orange;
+    color: #34495E;
     text-decoration: none;
 }
 
@@ -226,7 +228,7 @@ button {
 }
 
 button:hover {
-    color: #4EB722;
+    color: #be0e92;
     text-decoration: underline;
     cursor: pointer;
 }

@@ -9,9 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/tullo/snptx/internal/forms"
-	"github.com/tullo/snptx/internal/snippet"
-	"github.com/tullo/snptx/internal/user"
+	"github.com/tullo/snptx/internal/models"
 	"github.com/tullo/snptx/ui"
 )
 
@@ -19,11 +17,11 @@ type templateData struct {
 	CSRFToken       string
 	CurrentYear     int
 	Flash           string
-	Form            *forms.Form
+	Form            any
 	IsAuthenticated bool
-	Snippet         *snippet.Info
-	Snippets        []snippet.Info
-	User            *user.Info
+	Snippet         *models.Snippet
+	Snippets        []models.Snippet
+	User            *models.User
 	Version         string
 }
 
@@ -33,7 +31,8 @@ func humanDate(t time.Time) string {
 	}
 
 	// Convert the time to UTC before formatting it.
-	return t.UTC().Format("02 Jan 2006 at 15:04")
+	//return t.UTC().Format("02 Jan 2006 at 15:04")
+	return t.Format("02 Jan 2006 at 15:04")
 }
 
 func shortID(s string) string {

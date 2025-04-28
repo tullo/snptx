@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/tullo/snptx/internal/models"
 	"github.com/tullo/snptx/internal/snippet"
 )
 
-var mockSnippet = &snippet.Info{
+var mockSnippet = &models.Snippet{
 	ID:          "1",
 	Title:       "An old silent pond",
 	Content:     "An old silent pond...",
@@ -16,41 +17,41 @@ var mockSnippet = &snippet.Info{
 	DateExpires: time.Now(),
 }
 
-// Snippet manages the set of API's for snippet access
-type Snippet struct{}
+// SnippetStore manages the set of API's for snippet access
+type SnippetStore struct{}
 
-// NewSnippet constructs a Snippet for api access.
-func NewSnippet() Snippet {
-	var s Snippet
+// NewSnippetStore constructs a SnippetStore for api access.
+func NewSnippetStore() SnippetStore {
+	var s SnippetStore
 	return s
 }
 
 // Create inserts a new snippet record into the database.
-func (s Snippet) Create(context.Context, snippet.NewSnippet, time.Time) (*snippet.Info, error) {
-	var spt snippet.Info
+func (s SnippetStore) Create(context.Context, models.NewSnippet, time.Time) (*models.Snippet, error) {
+	var spt models.Snippet
 	spt.ID = "2"
 	return &spt, nil
 }
 
 // Retrieve gets the specified snippet from the database.
-func (s Snippet) Retrieve(ctx context.Context, id string) (*snippet.Info, error) {
+func (s SnippetStore) Retrieve(ctx context.Context, id string) (*models.Snippet, error) {
 	switch id {
 	case "1":
 		return mockSnippet, nil
 	case "66":
 		return nil, fmt.Errorf("internal server error")
 	default:
-		return nil, snippet.ErrNotFound
+		return nil, models.ErrNoRecord
 	}
 }
 
 // Latest gets the latest snippets from the database.
-func (s Snippet) Latest(context.Context) ([]snippet.Info, error) {
-	return []snippet.Info{*mockSnippet}, nil
+func (s SnippetStore) Latest(context.Context) ([]models.Snippet, error) {
+	return []models.Snippet{*mockSnippet}, nil
 }
 
 // Update updates a snippet record in the database.
-func (s Snippet) Update(ctx context.Context, id string, us snippet.UpdateSnippet, t time.Time) error {
+func (s SnippetStore) Update(ctx context.Context, id string, us models.UpdateSnippet, t time.Time) error {
 	switch id {
 	case "1":
 		return nil
@@ -62,6 +63,6 @@ func (s Snippet) Update(ctx context.Context, id string, us snippet.UpdateSnippet
 }
 
 // Delete removes a snippet record from the database.
-func (s Snippet) Delete(context.Context, string) error {
+func (s SnippetStore) Delete(context.Context, string) error {
 	return nil
 }
