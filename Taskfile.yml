@@ -49,11 +49,11 @@ tasks:
       - go list -mod=vendor all
 
   deps-list-final:
-    # -m flag causes list to list modules instead of packages.
     cmds:
       - go list -mod=readonly -m all
       - echo '==>' List of modules versions that will be used in a build for all direct and indirect dependencies.
       - go list -mod=readonly -m all | wc -l
+      # -m flag causes list to list modules instead of packages.
     silent: true
 
   deps-reset:
@@ -66,12 +66,20 @@ tasks:
     cmds:
       - go clean -modcache
 
+  deps-list-available-updates:
+    cmds:
+      - go list -mod=readonly -json -m -u all
+        # -m flag causes list to list modules instead of packages.
+        # -u flag causes list to include information about available upgrades.
+        # -json flag causes list to output JSON instead of text.
+    silent: true
+
   deps-upgrade:
-    # -t flag ...consider modules needed to build tests ...
-    # -u flag ...use newer minor or patch releases when available 
     cmds:
       - go get -t -u -v ./...
       - defer: { task: vendor }
+      # -t flag ...consider modules needed to build tests ...
+      # -u flag ...use newer minor or patch releases when available 
     silent: false
 
   vendor:
@@ -170,7 +178,27 @@ tasks:
     interactive: true
 
   go-test:
-    go test -count=1 -failfast -mod=vendor -test.timeout=30s ./...
+    cmds:
+      - go test -v -count=1 -failfast -mod=vendor -test.timeout=30s ./...
+      - defer: { task: run-checks }
+
+  go-test-coverage-summary:
+    cmds:
+      - go test -cover ./...
+
+  go-test-coverage-profile:
+    cmds:
+      - go test -test.timeout=30s -covermode=count -coverprofile=/tmp/profile.out ./...
+
+  go-tool-coverage-text:
+    deps: [go-test-coverage-profile]
+    cmds:
+      - go tool cover -func=/tmp/profile.out
+
+  go-tool-coverage-html:
+    deps: [go-test-coverage-profile]
+    cmds:
+      - go tool cover -html=/tmp/profile.out
 
   go-api-config:
     cmds:
@@ -178,6 +206,7 @@ tasks:
     silent: true
 
   go-run:
+    deps: [go-seed]
     cmds:
       - echo '==>' Activating debug mode to get detailed errors and stack traces in the http response.
       - |
@@ -197,16 +226,26 @@ tasks:
     silent: true
 
   go-migrate:
+    deps: [cockroach-start]
     cmds:
       - go run ./cmd/snptx-admin/main.go migrate
     silent: true
 
   go-seed:
+    deps: [go-migrate]
     cmds:
       - go run ./cmd/snptx-admin/main.go seed
     silent: true
 
+  go-mod-why:
+    cmds:
+      - go mod why -m go.uber.org/atomic
+
   sqlc-generate:
     cmds:
       - sqlc generate
-    silent: false
+
+  migrate-create:
+    cmds:
+      - migrate create -ext sql -dir internal/schema/migrations/ -seq -digits 6 create_authors
+      - migrate create -ext sql -dir internal/schema/migrations/ -seq -digits 6 add_index_on_authors_id
