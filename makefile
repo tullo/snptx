@@ -5,7 +5,6 @@ export REGISTRY_ACCOUNT = tullo
 export VERSION = 0.1.0
 export DOCKER_BUILDKIT = 1
 export COMPOSE_DOCKER_CLI_BUILD = 1
-export SESSION_SECRET = $(shell openssl rand -base64 32)
 export DATABASE_URL ?= postgresql://root@localhost:26257/snptx?sslmode=disable
 
 .DEFAULT_GOAL := run
@@ -13,71 +12,13 @@ export DATABASE_URL ?= postgresql://root@localhost:26257/snptx?sslmode=disable
 browse:
 	sensible-browser --new-tab https://snptx.127.0.0.1.nip.io:4200/ </dev/null >/dev/null 2>&1 & disown
 
-all: docker-build-image go-test-coverage-profile go-tool-cover-text staticcheck
+all: docker-build-image go-test-coverage-profile go-tool-cover-text
 
-run: compose-db-up go-seed go-run
+run: compose-db-up
 
 down: compose-down
 
-go-deps-upgrade:
-	@go get -d -t -u -v ./...
-#   -d flag ...download the source code needed to build ...
-#   -t flag ...consider modules needed to build tests ...
-#   -u flag ...use newer minor or patch releases when available 
-
-go-deps-reset:
-	@git checkout -- go.mod
-	@go mod tidy
-	@go mod vendor
-
-go-config:
-	@go run ./cmd/snptx --help
-
-go-mod-tidy:
-	@go mod tidy
-	@go mod vendor
-
-go-mod-list-final:
-	@echo '==>' Final versions that will be used in a build for all direct and indirect dependencies
-	@go list -mod=readonly -m all
-#	-m flag causes list to list modules instead of packages.
-
-go-mod-list-updates:
-	@go list -mod=readonly -json -m -u all
-#	-u flag adds information about available upgrades.
-
-go-mod-why:
-	@go mod why -m golang.org/x/sys
-
-go-run:
-	@go vet ./cmd/... ./internal/...
-	@echo '==>' Activating debug mode to get detailed errors and stack traces in the http response.
-	@go run ./cmd/snptx --db-disable-tls=1 --web-debug-mode=true \
-		--web-session-secret=${SESSION_SECRET} \
-		--aragon-memory=$$(( 64 * 1024 )) --aragon-iterations=1 --aragon-parallelism=1
-
-go-migrate:
-	@go run ./cmd/snptx-admin/main.go --db-disable-tls=1 migrate
-
-go-seed: go-migrate
-	@go run ./cmd/snptx-admin/main.go --db-disable-tls=1 seed
-
-go-test: staticcheck
-	@go test -count=1 -failfast -mod=vendor -test.timeout=30s ./...
-
-go-test-coverage-summary:
-	@go test -cover ./...
-
-go-test-coverage-profile:
-	@go test -test.timeout=30s -covermode=count -coverprofile=/tmp/profile.out ./...
-
-go-tool-cover-text:
-	@go tool cover -func=/tmp/profile.out
-
-go-tool-cover-html:
-	@go tool cover -html=/tmp/profile.out
-
-docker-build-image: staticcheck
+docker-build-image:
 	@go vet ./cmd/... ./internal/...
 	@docker build \
 		-f Dockerfile \
@@ -139,14 +80,6 @@ docker-remove-all: docker-stop-all
 
 deps-cleancache:
 	@go clean -modcache
-
-staticcheck:
-	@$$(go env GOPATH)/bin/staticcheck -go 1.16 -tests ./cmd/... ./internal/...
-
-staticcheck-install: GO111MODULE := on
-staticcheck-install:
-	@go install honnef.co/go/tools/cmd/staticcheck@v0.1.2
-	@$$(go env GOPATH)/bin/staticcheck -debug.version
 
 mkcert-install:
 	@echo make sure libnss3-tools is installed \"apt install libnss3-tools\"
