@@ -15,7 +15,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/justinas/alice v1.2.0
-	github.com/justinas/nosurf v1.1.1
+	github.com/justinas/nosurf v1.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/tullo/conf v1.3.7
 	go.opencensus.io v0.24.0
