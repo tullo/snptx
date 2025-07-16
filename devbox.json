@@ -6,7 +6,7 @@
     "git@2.49.0",
     "mkcert@1.4.4",
     "sqlc@1.29.0",
-    "direnv@2.36.0",
+    "direnv@2.37.0",
     "go-migrate@4.18.3"
   ],
   "shell": {
