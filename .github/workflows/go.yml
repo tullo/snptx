@@ -59,7 +59,7 @@ jobs:
         DATABASE_URL: postgresql://root@localhost:26257/snptx?sslmode=disable
         
     - name: Upload coverage
-      uses: codecov/codecov-action@v5.4.3
+      uses: codecov/codecov-action@v5.5.0
       with:
         files: coverprofile.cov
         token: ${{ secrets.CODECOV_TOKEN }}
