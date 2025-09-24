@@ -125,51 +125,51 @@
       "last_modified": "2025-04-30T07:41:21Z",
       "resolved": "github:NixOS/nixpkgs/423d2df5b04b4ee7688c3d71396e872afa236a89?lastModified=1745998881&narHash=sha256-vonyYAKJSlsX4n9GCsS0pHxR6yCrfqBIuGvANlkwG6U%3D"
     },
-    "go-migrate@4.18.3": {
-      "last_modified": "2025-05-06T08:06:31Z",
-      "resolved": "github:NixOS/nixpkgs/1cb1c02a6b1b7cf67e3d7731cbbf327a53da9679#go-migrate",
+    "go-migrate@4.19.0": {
+      "last_modified": "2025-09-18T16:33:27Z",
+      "resolved": "github:NixOS/nixpkgs/f4b140d5b253f5e2a1ff4e5506edbf8267724bde#go-migrate",
       "source": "devbox-search",
-      "version": "4.18.3",
+      "version": "4.19.0",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/2hvmkgb6apyk54yakx7kgw9f0i7gvm5v-go-migrate-4.18.3",
+              "path": "/nix/store/dyd7qdcbyxsbgm4cyz3dv1rn82zy21k1-go-migrate-4.19.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/2hvmkgb6apyk54yakx7kgw9f0i7gvm5v-go-migrate-4.18.3"
+          "store_path": "/nix/store/dyd7qdcbyxsbgm4cyz3dv1rn82zy21k1-go-migrate-4.19.0"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/xa7452r9aiqzf0lvzq4rl644q3v18mm9-go-migrate-4.18.3",
+              "path": "/nix/store/f39pqb09jw9q8r7xp1c6qc3rm92zdha0-go-migrate-4.19.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/xa7452r9aiqzf0lvzq4rl644q3v18mm9-go-migrate-4.18.3"
+          "store_path": "/nix/store/f39pqb09jw9q8r7xp1c6qc3rm92zdha0-go-migrate-4.19.0"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/lczrj1kggncrkkmwjkgjswk4396askag-go-migrate-4.18.3",
+              "path": "/nix/store/wp443sx0chmfdir7nbr02fwk1i1bllm8-go-migrate-4.19.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/lczrj1kggncrkkmwjkgjswk4396askag-go-migrate-4.18.3"
+          "store_path": "/nix/store/wp443sx0chmfdir7nbr02fwk1i1bllm8-go-migrate-4.19.0"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/q1j70q6c8dm62shpcj5cp5wf0i975hy8-go-migrate-4.18.3",
+              "path": "/nix/store/sylkwcspn0qrhdrzvpmgw425bsb63yhl-go-migrate-4.19.0",
               "default": true
             }
           ],
-          "store_path": "/nix/store/q1j70q6c8dm62shpcj5cp5wf0i975hy8-go-migrate-4.18.3"
+          "store_path": "/nix/store/sylkwcspn0qrhdrzvpmgw425bsb63yhl-go-migrate-4.19.0"
         }
       }
     },
