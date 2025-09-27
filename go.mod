@@ -6,7 +6,7 @@ toolchain go1.25.1
 
 require (
 	github.com/alexedwards/argon2id v1.0.0
-	github.com/alexedwards/scs/postgresstore v0.0.0-20250417082927-ab20b3feb5e9
+	github.com/alexedwards/scs/postgresstore v0.0.0-20250927115722-fb8d6f122cfb
 	github.com/alexedwards/scs/v2 v2.9.0
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/georgysavva/scany/v2 v2.1.4
@@ -31,7 +31,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/lib/pq v1.10.9 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
