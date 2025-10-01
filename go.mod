@@ -6,7 +6,7 @@ toolchain go1.25.1
 
 require (
 	github.com/alexedwards/argon2id v1.0.0
-	github.com/alexedwards/scs/postgresstore v0.0.0-20250930194851-fd9810000aff
+	github.com/alexedwards/scs/postgresstore v0.0.0-20251001152029-20477ae1fec6
 	github.com/alexedwards/scs/v2 v2.9.0
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/georgysavva/scany/v2 v2.1.4
