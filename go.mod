@@ -10,7 +10,7 @@ require (
 	github.com/alexedwards/scs/v2 v2.9.0
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/georgysavva/scany/v2 v2.1.4
-	github.com/go-playground/form/v4 v4.2.1
+	github.com/go-playground/form/v4 v4.3.0
 	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.6
