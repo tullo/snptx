@@ -317,51 +317,51 @@
         }
       }
     },
-    "sqlc@1.30.0": {
-      "last_modified": "2025-09-18T16:33:27Z",
-      "resolved": "github:NixOS/nixpkgs/f4b140d5b253f5e2a1ff4e5506edbf8267724bde#sqlc",
+    "sqlc@1.31.1": {
+      "last_modified": "2026-04-30T11:26:30Z",
+      "resolved": "github:NixOS/nixpkgs/7aaa00e7cc9be6c316cb5f6617bd740dd435c59d#sqlc",
       "source": "devbox-search",
-      "version": "1.30.0",
+      "version": "1.31.1",
       "systems": {
         "aarch64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/hhvfx7hca4npv228p1ar16bsqmhajn6d-sqlc-1.30.0",
+              "path": "/nix/store/kf838vd3v3hr7bihsz95wvl65g0hw17b-sqlc-1.31.1",
               "default": true
             }
           ],
-          "store_path": "/nix/store/hhvfx7hca4npv228p1ar16bsqmhajn6d-sqlc-1.30.0"
+          "store_path": "/nix/store/kf838vd3v3hr7bihsz95wvl65g0hw17b-sqlc-1.31.1"
         },
         "aarch64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/sv33c0cz6gkphh4irl6zfcbblwjj78af-sqlc-1.30.0",
+              "path": "/nix/store/akp1hqh74c4vaif7s0fv7av7zl2blq0d-sqlc-1.31.1",
               "default": true
             }
           ],
-          "store_path": "/nix/store/sv33c0cz6gkphh4irl6zfcbblwjj78af-sqlc-1.30.0"
+          "store_path": "/nix/store/akp1hqh74c4vaif7s0fv7av7zl2blq0d-sqlc-1.31.1"
         },
         "x86_64-darwin": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/7v49xif1d651dfhfy58548j62x8w2y5x-sqlc-1.30.0",
+              "path": "/nix/store/jsnyn9i8mis3ysk0fbx72zwbidxxi2c6-sqlc-1.31.1",
               "default": true
             }
           ],
-          "store_path": "/nix/store/7v49xif1d651dfhfy58548j62x8w2y5x-sqlc-1.30.0"
+          "store_path": "/nix/store/jsnyn9i8mis3ysk0fbx72zwbidxxi2c6-sqlc-1.31.1"
         },
         "x86_64-linux": {
           "outputs": [
             {
               "name": "out",
-              "path": "/nix/store/c60yf70a8r8f94sjqvxm6zf6npb9b311-sqlc-1.30.0",
+              "path": "/nix/store/5f1l6vncx0421i5kihxqj6nfy58rimsj-sqlc-1.31.1",
               "default": true
             }
           ],
-          "store_path": "/nix/store/c60yf70a8r8f94sjqvxm6zf6npb9b311-sqlc-1.30.0"
+          "store_path": "/nix/store/5f1l6vncx0421i5kihxqj6nfy58rimsj-sqlc-1.31.1"
         }
       }
     }
