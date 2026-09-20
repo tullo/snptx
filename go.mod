@@ -1,6 +1,6 @@
 module github.com/tullo/snptx
 
-go 1.25.11
+go 1.26
 
 toolchain go1.27.1
 
@@ -10,7 +10,7 @@ require (
 	github.com/alexedwards/scs/v2 v2.9.0
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/georgysavva/scany/v2 v2.1.4
-	github.com/go-playground/form/v4 v4.3.1
+	github.com/go-playground/form/v4 v4.5.0
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.11.0
