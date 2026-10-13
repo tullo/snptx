@@ -7,7 +7,7 @@
     "mkcert@1.4.4",
     "sqlc@1.31.1",
     "direnv@2.37.1",
-    "go-migrate@4.19.1"
+    "go-migrate@4.20.1"
   ],
   "shell": {
     "init_hook": [
